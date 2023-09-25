@@ -18,13 +18,11 @@ function App() {
     return data;
   };
 
-  const generateRectangularData = (a, f, N)
+  const generateRectangularData = (a, f, N) {
+    
+  }
   
-  const sinusData = generateSinusData(amplitude, frequency, samplingFrequency, 0); // Adjust formula parameters as needed
-  // const chartData2 = generateSinusData(amplitude, 3, Math.PI / 2); // Adjust formula parameters as needed
-  // const chartData3 = generateSinusData(amplitude, 1, Math.PI); // Adjust formula parameters as needed
-  // const chartData4 = generateSinusData(amplitude, 4, Math.PI * 1.5);
-  
+  const sinusData = generateSinusData(amplitude, frequency, samplingFrequency, 0);
 
   return (
     <div className="bg-blue-50 p-5 h-full">
