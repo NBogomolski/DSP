@@ -14,7 +14,7 @@ const Plot = ({ data, formula, chartName }) => {
     <>
       <div className="chart-container w-fit">
         <h3 className="text-lg font-bold">{chartName}</h3>
-        <LineChart width={800} height={400} data={data}>
+        <LineChart width={1000} height={400} data={data}>
           <XAxis dataKey="n" />
           <YAxis domain={[-1, 1]} />
           <CartesianGrid stroke="#ccc" />
