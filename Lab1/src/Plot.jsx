@@ -16,7 +16,7 @@ const Plot = ({ data, formula, chartName }) => {
         <h3 className="text-lg font-bold">{chartName}</h3>
         <LineChart width={1000} height={400} data={data}>
           <XAxis dataKey="n" />
-          <YAxis domain={[-1, 1]} />
+          <YAxis domain={[-1, 1]} tickFormatter={(num) => num.toFixed(2)} />
           <CartesianGrid stroke="#ccc" />
           <Tooltip />
           <Legend />

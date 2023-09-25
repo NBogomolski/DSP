@@ -42,7 +42,6 @@ function App() {
       if (expression < dc)
         data.push({n, y: a})
       else {
-        console.log('els')
         const negA = -1 * a
         data.push({n, y: negA})
       }
@@ -68,10 +67,39 @@ function App() {
     return data;
   };
   
-  const sinusData = generateSinusData(amplitude, frequency, samplingFrequency, phase0);
+  const modulateAmplitude = (a, N, prevData, f, phi0) => {
+    // const data = []
+    return prevData.map((value, index) => {
+      const y =
+        a * (1 + value.y) * Math.sin((2 * Math.PI * f * (index-1)) / N + phi0);
+        return {...value, y}
+    })
+    // for (let n = 1; n <= N; n++) {
+    //   const y = a * (1 + prevData[n-1]) * Math.sin(2 * Math.PI * f * n/N + phi0);
+    //   data.push({ n, y });
+    // }
+    // return data;
+  }
+
+  function addChartData(data1, data2) {
+  return data1.map((value, ind) => {
+    const otherObj = data2[ind]
+    return {...value, y: otherObj.y + value.y}
+  })
+  }
+  
+  let sinusData = generateSinusData(amplitude, frequency, samplingFrequency, phase0);
   const rectangleData = generateRectangularData(amplitude, frequency, samplingFrequency, dutyCycle)
   const triangleData = generateTriangularData(amplitude, frequency, samplingFrequency, phase0)
   const sawlikeData = generateSawlikeData(amplitude, frequency, samplingFrequency, phase0)
+
+  if (isAmplitudeModulated)
+    sinusData = modulateAmplitude(carrierAmplitude, samplingFrequency, sinusData, carrierFrequency, carrierPhase)
+
+  const sumOfData = addChartData(
+    addChartData(sinusData, rectangleData),
+    addChartData(triangleData, sawlikeData)
+  )
 
   return (
     <div className="bg-blue-50 p-5 h-full">
@@ -129,40 +157,46 @@ function App() {
           />
           <div>
             {/* <Label htmlFor='amplitude-modulation' color="black" className='text-lg' value='Amplitude modulation'></Label> */}
-            <ToggleSwitch id='amplitude-modulation' label='Amplitude modulation' checked={isAmplitudeModulated} onChange={e => setIsAmplitudeModulated(!isAmplitudeModulated)}/>
+            <ToggleSwitch
+              id="amplitude-modulation"
+              label="Amplitude modulation"
+              checked={isAmplitudeModulated}
+              onChange={(e) => setIsAmplitudeModulated(!isAmplitudeModulated)}
+            />
           </div>
-          {isAmplitudeModulated && (<>
-            
-            <h1 className="text-xl">Carrier signal</h1>
-            <Label
-              htmlFor="amplitude-carrier"
-              value={"Amplitude " + carrierAmplitude}
-              color="black"
-              className="text-lg"
-            />
-            <RangeSlider
-              id="amplitude-carrier"
-              sizing="lg"
-              onChange={(e) => setCarrierAmplitude(e.target.value / 100)}
-            />
-            <Label
-              htmlFor="frequency-carrier"
-              value={"Frequency " + carrierFrequency}
-              color="black"
-              className="text-lg"
-            />
-            <RangeSlider
-              id="frequency-carrier"
-              sizing="lg"
-              onChange={(e) => setCarrierFrequency(e.target.value / 10)}
-            />
-            <TextInput
-              placeholder="phi0"
-              type="number"
-              value={carrierPhase}
-              onChange={(e) => setCarrierPhase(e.target.value)}
-            />
-          </>)}
+          {isAmplitudeModulated && (
+            <>
+              <h1 className="text-xl">Carrier signal</h1>
+              <Label
+                htmlFor="amplitude-carrier"
+                value={"Amplitude " + carrierAmplitude}
+                color="black"
+                className="text-lg"
+              />
+              <RangeSlider
+                id="amplitude-carrier"
+                sizing="lg"
+                onChange={(e) => setCarrierAmplitude(e.target.value / 100)}
+              />
+              <Label
+                htmlFor="frequency-carrier"
+                value={"Frequency " + carrierFrequency}
+                color="black"
+                className="text-lg"
+              />
+              <RangeSlider
+                id="frequency-carrier"
+                sizing="lg"
+                onChange={(e) => setCarrierFrequency(e.target.value / 10)}
+              />
+              <TextInput
+                placeholder="phi0"
+                type="number"
+                value={carrierPhase}
+                onChange={(e) => setCarrierPhase(e.target.value)}
+              />
+            </>
+          )}
         </div>
         <div className="flex flex-col flex-grow p-5 w-fit self-end">
           <Plot data={sinusData} formula={"x=f(n)"} chartName={"Sinus"}></Plot>
@@ -181,16 +215,11 @@ function App() {
             formula={"x=f(n)"}
             chartName={"Sawlike"}
           ></Plot>
-          {/*           <Plot
-            data={chartData3}
-            formula={"y=f(x)"}
-            chartName={"Triangle"}
-          ></Plot>
           <Plot
-            data={chartData4}
-            formula={"y=f(x)"}
-            chartName={"Saw-like"} 
-  ></Plot> */}
+            data={sumOfData}
+            formula={"x=f(n)"}
+            chartName={"Sum of charts"}
+          ></Plot>
         </div>
       </div>
     </div>
