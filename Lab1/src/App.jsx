@@ -13,46 +13,48 @@ import {
 } from "recharts";
 
 function App() {
-  const [amplitude, setAmplitude] = useState(0.5)
-  const [frequency, setFrequency] = useState(5)
-  const [samplingFrequency, setSamplingFrequency] = useState(50)
-  const [dutyCycle, setDutyCycle] = useState(0.5)
-  const [phase0, setPhase0] = useState(0)
+  const [amplitude, setAmplitude] = useState(0.5);
+  const [frequency, setFrequency] = useState(5);
+  const [samplingFrequency, setSamplingFrequency] = useState(50);
+  const [dutyCycle, setDutyCycle] = useState(0.5);
+  const [phase0, setPhase0] = useState(0);
 
-  const [isAmplitudeModulated, setIsAmplitudeModulated] = useState(false)
-  const [carrierAmplitude, setCarrierAmplitude] = useState(0.5)
-  const [carrierFrequency, setCarrierFrequency] = useState(5)
-  const [carrierPhase, setCarrierPhase] = useState(0)
-  
+  const [isAmplitudeModulated, setIsAmplitudeModulated] = useState(false);
+  const [carrierAmplitude, setCarrierAmplitude] = useState(0.5);
+  const [carrierFrequency, setCarrierFrequency] = useState(5);
+  const [carrierPhase, setCarrierPhase] = useState(0);
+
+  const [isFourierTransformed, setIsFourierTransformed] = useState(false);
+
   const generateSinusData = (a, f, N, phi0) => {
     const data = [];
     for (let n = 1; n <= N; n++) {
-      const y = a * Math.sin(2*Math.PI * f * n/N + phi0); // Customize the formula here
+      const y = a * Math.sin((2 * Math.PI * f * n) / N + phi0); // Customize the formula here
       data.push({ n, y });
-
     }
     return data;
   };
 
   const generateRectangularData = (a, f, N, dc) => {
-    const data = []
+    const data = [];
     for (let n = 1; n <= N; n++) {
-      let period = 1 / f
-      let expression = ((n/N) % period) / period
-      if (expression < dc)
-        data.push({n, y: a})
+      let period = 1 / f;
+      let expression = ((n / N) % period) / period;
+      if (expression < dc) data.push({ n, y: a });
       else {
-        const negA = -1 * a
-        data.push({n, y: negA})
+        const negA = -1 * a;
+        data.push({ n, y: negA });
       }
     }
-    return data
-  }
+    return data;
+  };
 
   const generateTriangularData = (a, f, N, phi0) => {
     const data = [];
     for (let n = 1; n <= N; n++) {
-      const y = 2*a / Math.PI * Math.asin(Math.sin(2*Math.PI*f*n/N + phi0))
+      const y =
+        ((2 * a) / Math.PI) *
+        Math.asin(Math.sin((2 * Math.PI * f * n) / N + phi0));
       data.push({ n, y });
     }
     return data;
@@ -61,45 +63,74 @@ function App() {
   const generateSawlikeData = (a, f, N, phi0) => {
     const data = [];
     for (let n = 1; n <= N; n++) {
-      const y = -2*a/Math.PI * Math.atan(1/Math.tan(Math.PI*f*n/N + phi0))
+      const y =
+        ((-2 * a) / Math.PI) *
+        Math.atan(1 / Math.tan((Math.PI * f * n) / N + phi0));
       data.push({ n, y });
     }
     return data;
   };
-  
+
   const modulateAmplitude = (a, N, prevData, f, phi0) => {
     // const data = []
     return prevData.map((value, index) => {
       const y =
-        a * (1 + value.y) * Math.sin((2 * Math.PI * f * (index-1)) / N + phi0);
-        return {...value, y}
-    })
-    // for (let n = 1; n <= N; n++) {
-    //   const y = a * (1 + prevData[n-1]) * Math.sin(2 * Math.PI * f * n/N + phi0);
-    //   data.push({ n, y });
-    // }
-    // return data;
-  }
+        a *
+        (1 + value.y) *
+        Math.sin((2 * Math.PI * f * (index - 1)) / N + phi0);
+      return { ...value, y };
+    });
+  };
 
   function addChartData(data1, data2) {
-  return data1.map((value, ind) => {
-    const otherObj = data2[ind]
-    return {...value, y: otherObj.y + value.y}
-  })
+    return data1.map((value, ind) => {
+      const otherObj = data2[ind];
+      return { ...value, y: otherObj.y + value.y };
+    });
   }
-  
-  let sinusData = generateSinusData(amplitude, frequency, samplingFrequency, phase0);
-  const rectangleData = generateRectangularData(amplitude, frequency, samplingFrequency, dutyCycle)
-  const triangleData = generateTriangularData(amplitude, frequency, samplingFrequency, phase0)
-  const sawlikeData = generateSawlikeData(amplitude, frequency, samplingFrequency, phase0)
+
+  // Apply Fourier transform
+
+
+
+  let sinusData = generateSinusData(
+    amplitude,
+    frequency,
+    samplingFrequency,
+    phase0
+  );
+  const rectangleData = generateRectangularData(
+    amplitude,
+    frequency,
+    samplingFrequency,
+    dutyCycle
+  );
+  const triangleData = generateTriangularData(
+    amplitude,
+    frequency,
+    samplingFrequency,
+    phase0
+  );
+  const sawlikeData = generateSawlikeData(
+    amplitude,
+    frequency,
+    samplingFrequency,
+    phase0
+  );
 
   if (isAmplitudeModulated)
-    sinusData = modulateAmplitude(carrierAmplitude, samplingFrequency, sinusData, carrierFrequency, carrierPhase)
+    sinusData = modulateAmplitude(
+      carrierAmplitude,
+      samplingFrequency,
+      sinusData,
+      carrierFrequency,
+      carrierPhase
+    );
 
   const sumOfData = addChartData(
     addChartData(sinusData, rectangleData),
     addChartData(triangleData, sawlikeData)
-  )
+  );
 
   return (
     <div className="bg-blue-50 p-5 h-full">
@@ -156,8 +187,8 @@ function App() {
             onChange={(e) => setPhase0(e.target.value)}
           />
           <div>
-            {/* <Label htmlFor='amplitude-modulation' color="black" className='text-lg' value='Amplitude modulation'></Label> */}
             <ToggleSwitch
+              className="text-2xl"
               id="amplitude-modulation"
               label="Amplitude modulation"
               checked={isAmplitudeModulated}
@@ -197,6 +228,13 @@ function App() {
               />
             </>
           )}
+          <ToggleSwitch
+            className='text-2xl'
+            id="fourier-transformation"
+            label="Fourier Transformation"
+            checked={isFourierTransformed}
+            onChange={() => setIsFourierTransformed(!isFourierTransformed)}
+            />
         </div>
         <div className="flex flex-col flex-grow p-5 w-fit self-end">
           <Plot data={sinusData} formula={"x=f(n)"} chartName={"Sinus"}></Plot>
