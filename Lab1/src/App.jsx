@@ -1,7 +1,14 @@
+
 import { useState, useEffect } from 'react'
 import Plot from './Plot.jsx'
 import './App.css'
-import { Label, RangeSlider, TextInput, ToggleSwitch } from "flowbite-react";
+import {
+  Label,
+  RangeSlider,
+  TextInput,
+  ToggleSwitch,
+  Checkbox,
+} from "flowbite-react";
 import {
   BarChart,
   XAxis,
@@ -25,6 +32,7 @@ function App() {
   const [carrierPhase, setCarrierPhase] = useState(0);
 
   const [isFourierTransformed, setIsFourierTransformed] = useState(false);
+  const [amplitudeSpecEnabled, setAmplitudeSpecEnabled] = useState(false);
 
   const generateSinusData = (a, f, N, phi0) => {
     const data = [];
@@ -135,7 +143,7 @@ function App() {
   return (
     <div className="bg-blue-50 p-5 h-full">
       <div className="flex flex-row justify-end">
-        <div className="flex flex-col w-2/6 fixed z-50">
+        <div className="flex flex-col fixed z-50 right-2">
           <Label
             htmlFor="amplitude"
             value={"Amplitude " + amplitude}
@@ -229,13 +237,30 @@ function App() {
             </>
           )}
           <ToggleSwitch
-            className='text-2xl'
+            className="text-2xl"
             id="fourier-transformation"
             label="Fourier Transformation"
             checked={isFourierTransformed}
             onChange={() => setIsFourierTransformed(!isFourierTransformed)}
-            />
+          />
         </div>
+        {isFourierTransformed && (
+          <div className="fl">
+            <Label
+              className="flex text-xl"
+              htmlFor="amplitude-spectrum"
+              value="Amplitude spectrum"
+            />
+            <div className="flex h-11 items-center">
+              <Checkbox
+                defaultChecked={amplitudeSpecEnabled}
+                id="amplitude-spectrum"
+                value={amplitudeSpecEnabled}
+                onChange={(e) => setAmplitudeSpecEnabled(e.target.checked)}
+              />
+            </div>
+          </div>
+        )}
         <div className="flex flex-col flex-grow p-5 w-fit self-end">
           <Plot data={sinusData} formula={"x=f(n)"} chartName={"Sinus"}></Plot>
           <Plot
