@@ -2,7 +2,7 @@ import { useState} from 'react'
 import Plot from './Plot.jsx'
 import './App.css'
 import { Label, RangeSlider, TextInput, ToggleSwitch } from "flowbite-react";
-import { Switch, Button, Flex, Typography, Slider } from 'antd';
+import { Switch, Flex, Typography, InputNumber } from 'antd';
 import { StyleProvider } from "@ant-design/cssinjs";
 
 const {Title} = Typography;
@@ -131,7 +131,7 @@ function App() {
     <div className="bg-blue-50 p-5 h-full">
       <div className="flex flex-row justify-end">
         <div className="flex flex-col w-2/6 fixed z-50">
-          <StyleProvider hashPriority="high">
+          {/* <StyleProvider hashPriority="high">
             <Flex justify="space-around" vertical>
               <div>
                 <Title level={4}>Amplitude</Title>
@@ -142,12 +142,12 @@ function App() {
                 <Slider defaultValue={frequency} />
               </div>
             </Flex>
-          </StyleProvider>
+          </StyleProvider> */}
           <Label
             htmlFor="amplitude"
             value={"Amplitude " + amplitude}
             color="black"
-            className="text-lg"
+            className="text-2xl"
           />
           <RangeSlider
             id="amplitude"
@@ -158,7 +158,7 @@ function App() {
             htmlFor="frequency"
             value={"Frequency " + frequency}
             color="black"
-            className="text-lg"
+            className="text-2xl"
           />
           <RangeSlider
             id="frequency"
@@ -169,7 +169,7 @@ function App() {
             htmlFor="sampling-frequency"
             value={"Sampling frequency " + samplingFrequency}
             color="black"
-            className="text-lg"
+            className="text-2xl"
           />
           <RangeSlider
             id="sampling-frequency"
@@ -180,36 +180,52 @@ function App() {
             htmlFor="duty-cycle"
             value={"Duty cycle " + dutyCycle}
             color="black"
-            className="text-lg"
+            className="text-2xl"
           />
           <RangeSlider
             id="sampling-frequency"
             sizing="lg"
             onChange={(e) => setDutyCycle(e.target.value / 100)}
           />
-          <TextInput
+          {/* <TextInput
             placeholder="phi0"
             type="number"
             value={phase0}
             onChange={(e) => setPhase0(e.target.value)}
+          /> */}
+          <Label
+            value={"Phase 0"}
+            color="black"
+            className="text-2xl"
+          />
+          <InputNumber
+            className='my-2'
+            placeholder="phi0"
+            min={0}
+            max={100}
+            value={phase0}
+            onChange={(value) => setPhase0(value)}
           />
           <div>
             <StyleProvider hashPriority={"high"}>
-              <ToggleSwitch
+              {/* <ToggleSwitch
                 className="text-2xl"
                 id="amplitude-modulation"
                 label="Amplitude modulation"
                 checked={isAmplitudeModulated}
                 onChange={() => setIsAmplitudeModulated(!isAmplitudeModulated)}
-              />
-              <Title level={3}>h3. Ant Design</Title>
-              <Switch
-                id="amplitude-modulation"
-                label="Amplitude modulation"
-                checked={isAmplitudeModulated}
-                onChange={() => setIsAmplitudeModulated(!isAmplitudeModulated)}
-              />
-              <Button type="primary">btn</Button>
+              /> */}
+              <Flex align="center">
+                <Title level={3}>Amplitude Modulation</Title>
+                <Switch
+                  id="amplitude-modulation"
+                  label="Amplitude modulation"
+                  checked={isAmplitudeModulated}
+                  onChange={() =>
+                    setIsAmplitudeModulated(!isAmplitudeModulated)
+                  }
+                />
+              </Flex>
             </StyleProvider>
           </div>
           {isAmplitudeModulated && (
@@ -245,13 +261,22 @@ function App() {
               />
             </>
           )}
-          <ToggleSwitch
+          {/* <ToggleSwitch
             className="text-2xl"
             id="fourier-transformation"
             label="Fourier Transformation"
             checked={isFourierTransformed}
             onChange={() => setIsFourierTransformed(!isFourierTransformed)}
-          />
+          /> */}
+          <Flex align="center">
+            <Title level={3}>Fourier Transformation</Title>
+            <Switch
+              id="fourier-transformation"
+              label="Fourier Transformation"
+              checked={isFourierTransformed}
+              onChange={() => setIsFourierTransformed(!isFourierTransformed)}
+            />
+          </Flex>
         </div>
         <div className="flex flex-col flex-grow p-5 w-fit self-end">
           <Plot data={sinusData} formula={"x=f(n)"} chartName={"Sinus"}></Plot>
