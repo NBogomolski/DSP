@@ -1,16 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState} from 'react'
 import Plot from './Plot.jsx'
 import './App.css'
 import { Label, RangeSlider, TextInput, ToggleSwitch } from "flowbite-react";
-import {
-  BarChart,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  Bar,
-} from "recharts";
+import { Switch, Button, Flex, Typography, Slider } from 'antd';
+import { StyleProvider } from "@ant-design/cssinjs";
+
+const {Title} = Typography;
 
 function App() {
   const [amplitude, setAmplitude] = useState(0.5);
@@ -136,6 +131,18 @@ function App() {
     <div className="bg-blue-50 p-5 h-full">
       <div className="flex flex-row justify-end">
         <div className="flex flex-col w-2/6 fixed z-50">
+          <StyleProvider hashPriority="high">
+            <Flex justify="space-around" vertical>
+              <div>
+                <Title level={4}>Amplitude</Title>
+                <Slider defaultValue={amplitude} min={0} max={1} step={0.01} />
+              </div>
+              <div>
+                <Title level={4}>Frequency</Title>
+                <Slider defaultValue={frequency} />
+              </div>
+            </Flex>
+          </StyleProvider>
           <Label
             htmlFor="amplitude"
             value={"Amplitude " + amplitude}
@@ -187,13 +194,23 @@ function App() {
             onChange={(e) => setPhase0(e.target.value)}
           />
           <div>
-            <ToggleSwitch
-              className="text-2xl"
-              id="amplitude-modulation"
-              label="Amplitude modulation"
-              checked={isAmplitudeModulated}
-              onChange={(e) => setIsAmplitudeModulated(!isAmplitudeModulated)}
-            />
+            <StyleProvider hashPriority={"high"}>
+              <ToggleSwitch
+                className="text-2xl"
+                id="amplitude-modulation"
+                label="Amplitude modulation"
+                checked={isAmplitudeModulated}
+                onChange={() => setIsAmplitudeModulated(!isAmplitudeModulated)}
+              />
+              <Title level={3}>h3. Ant Design</Title>
+              <Switch
+                id="amplitude-modulation"
+                label="Amplitude modulation"
+                checked={isAmplitudeModulated}
+                onChange={() => setIsAmplitudeModulated(!isAmplitudeModulated)}
+              />
+              <Button type="primary">btn</Button>
+            </StyleProvider>
           </div>
           {isAmplitudeModulated && (
             <>
@@ -229,12 +246,12 @@ function App() {
             </>
           )}
           <ToggleSwitch
-            className='text-2xl'
+            className="text-2xl"
             id="fourier-transformation"
             label="Fourier Transformation"
             checked={isFourierTransformed}
             onChange={() => setIsFourierTransformed(!isFourierTransformed)}
-            />
+          />
         </div>
         <div className="flex flex-col flex-grow p-5 w-fit self-end">
           <Plot data={sinusData} formula={"x=f(n)"} chartName={"Sinus"}></Plot>
