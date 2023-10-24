@@ -1,11 +1,11 @@
-import { useState} from 'react'
-import Plot from './Plot.jsx'
-import './App.css'
+import { useState, useMemo } from "react";
+import Plot from "./Plot.jsx";
+import "./App.css";
 import { Label, RangeSlider, TextInput, ToggleSwitch } from "flowbite-react";
-import { Switch, Flex, Typography, InputNumber } from 'antd';
+import { Switch, Flex, Typography, InputNumber } from "antd";
 import { StyleProvider } from "@ant-design/cssinjs";
 
-const {Title} = Typography;
+const { Title } = Typography;
 
 function App() {
   const [amplitude, setAmplitude] = useState(0.5);
@@ -20,6 +20,7 @@ function App() {
   const [carrierPhase, setCarrierPhase] = useState(0);
 
   const [isFourierTransformed, setIsFourierTransformed] = useState(false);
+  const [kFourier, setKFourier] = useState(0);
 
   const generateSinusData = (a, f, N, phi0) => {
     const data = [];
@@ -86,7 +87,67 @@ function App() {
 
   // Apply Fourier transform
 
+  const calculateFourierCoordinates = (N, f, f0, A, k) => {
+    let dataArr = [];
+    for (let i = 0; i < N; i += N / k) {
+      const value = A * Math.sin((2 * Math.PI * f * i) / N + f0);
+      dataArr.push(value);
+    }
+    return dataArr;
+  };
 
+  const kpoints = useMemo(() => {
+    return calculateFourierCoordinates(
+      samplingFrequency,
+      frequency,
+      phase0,
+      amplitude,
+      kFourier
+    );
+  }, [samplingFrequency, amplitude, phase0, frequency, kFourier]);
+
+  const calcFourier = (points, N) => {
+    const res = {
+      A: [],
+      aCos: [],
+      aSin: [],
+      phases: [],
+    };
+    const n = N;
+    const k = points.length;
+    for (let j = 0; j < k; j++) {
+      let cos = 0;
+      let sin = 0;
+      for (let i = 0; i < k; i++) {
+        cos += points[i] * Math.cos((2 * Math.PI * i * j) / k);
+        sin += points[i] * Math.sin((2 * Math.PI * i * j) / k);
+      }
+
+      sin *= 2 / k;
+      cos *= 2 / k;
+
+      res.aSin.push(sin);
+      res.aCos.push(cos);
+      res.A.push(Math.sqrt(sin * sin + cos * cos));
+      res.phases.push(Math.atan2(sin, cos));
+    }
+  };
+
+  const calcReverseFourier = (fourier, n, isHarmonic) => {
+    const res = [];
+    const k = fourier.A.length;
+    for (let i = 0; i < n; i++) {
+      let signal = 0;
+
+      for (let j = isHarmonic ? 0 : 1; j < k / 2; j++) {
+        signal +=
+          fourier.A[j] *
+          Math.cos((2 * Math.PI * i * j) / n - fourier.phases[j]);
+      }
+      res.push(signal + (!isHarmonic ? fourier.A[0] / 2 : 0));
+    }
+    return res;
+  };
 
   let sinusData = generateSinusData(
     amplitude,
@@ -127,22 +188,22 @@ function App() {
     addChartData(triangleData, sawlikeData)
   );
 
+  let otherData = [];
+  if (isFourierTransformed) {
+    const yCoordinaties = sinusData.map((v) => v.y);
+    console.log(yCoordinaties);
+    const transformedData = calcFourier(kpoints, samplingFrequency);
+    console.log(transformedData); //!undefined
+    otherData = calcReverseFourier(transformedData, samplingFrequency, true);
+  }
+  otherData = otherData.map((v, ind) => {
+    return { y: v, n: ind + 1 };
+  });
+
   return (
     <div className="bg-blue-50 p-5 h-full">
       <div className="flex flex-row justify-end">
         <div className="flex flex-col w-2/6 fixed z-50">
-          {/* <StyleProvider hashPriority="high">
-            <Flex justify="space-around" vertical>
-              <div>
-                <Title level={4}>Amplitude</Title>
-                <Slider defaultValue={amplitude} min={0} max={1} step={0.01} />
-              </div>
-              <div>
-                <Title level={4}>Frequency</Title>
-                <Slider defaultValue={frequency} />
-              </div>
-            </Flex>
-          </StyleProvider> */}
           <Label
             htmlFor="amplitude"
             value={"Amplitude " + amplitude}
@@ -193,13 +254,9 @@ function App() {
             value={phase0}
             onChange={(e) => setPhase0(e.target.value)}
           /> */}
-          <Label
-            value={"Phase 0"}
-            color="black"
-            className="text-2xl"
-          />
+          <Label value={"Phase 0"} color="black" className="text-2xl" />
           <InputNumber
-            className='my-2'
+            className="my-2"
             placeholder="phi0"
             min={0}
             max={100}
@@ -277,9 +334,39 @@ function App() {
               onChange={() => setIsFourierTransformed(!isFourierTransformed)}
             />
           </Flex>
+          {isFourierTransformed && (
+            <div className="flex items-center">
+              <Title level={3}>k</Title>
+              <InputNumber
+                className="m-2"
+                placeholder="k"
+                min={0}
+                max={100}
+                value={kFourier}
+                onChange={(value) => setKFourier(value)}
+              />
+            </div>
+          )}
         </div>
         <div className="flex flex-col flex-grow p-5 w-fit self-end">
-          <Plot data={sinusData} formula={"x=f(n)"} chartName={"Sinus"}></Plot>
+          <Plot
+            data={sinusData}
+            formula={"x=f(n)"}
+            chartName={"Sinus"}
+            otherData={
+              isFourierTransformed
+                ? [
+                    generateSinusData(
+                      amplitude + 2,
+                      frequency - 1,
+                      samplingFrequency,
+                      phase0 + 2
+                    ),
+                    otherData,
+                  ]
+                : undefined
+            }
+          ></Plot>
           <Plot
             data={rectangleData}
             formula={"x=f(n)"}
@@ -306,4 +393,4 @@ function App() {
   );
 }
 
-export default App	
+export default App;
