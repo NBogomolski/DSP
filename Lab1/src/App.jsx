@@ -28,6 +28,7 @@ function App() {
       const y = a * Math.sin((2 * Math.PI * f * n) / N + phi0); // Customize the formula here
       data.push({ n, y });
     }
+    console.log(data)
     return data;
   };
 
@@ -87,24 +88,75 @@ function App() {
 
   // Apply Fourier transform
 
-  const calculateFourierCoordinates = (N, f, f0, A, k) => {
+  const calculateFourierCoordinatesSinus = (N, f, f0, A, k) => {
     let dataArr = [];
     for (let i = 0; i < N; i += N / k) {
       const value = A * Math.sin((2 * Math.PI * f * i) / N + f0);
       dataArr.push(value);
     }
+    console.log(dataArr)
     return dataArr;
   };
 
-  const kpoints = useMemo(() => {
-    return calculateFourierCoordinates(
-      samplingFrequency,
-      frequency,
-      phase0,
-      amplitude,
-      kFourier
-    );
-  }, [samplingFrequency, amplitude, phase0, frequency, kFourier]);
+  const calculateFourierCoordinatesRectangle = (N, T, A, dc, k) => {
+    let dataArr = [];
+    for (let i = 0; i < N; i += N / k) {
+      const value = ((i / N) % T) / T < dc ? A : -A;
+      dataArr.push(value);
+    }
+    return dataArr;
+  }
+
+  const calculateFourierCoordinatesTriangle = (A, f, N, f0, k) => {
+    let dataArr = [];
+    for (let i = 0; i < N; i += N / k) {
+      const value =
+        ((2 * A) / Math.PI) *
+        Math.asin(Math.sin((2 * Math.PI * f * i) / N + f0));
+      dataArr.push(value);
+    }
+    return dataArr;
+  }
+
+  const calculateFourierCoordinatesSawlike = (A, N, k, f, f0) => {
+    let dataArr = [];
+    for (let i = 0; i < N; i += N / k) {
+      const value =
+        ((-2 * A) / Math.PI) *
+        1 *
+        Math.atan(1 / Math.tan((Math.PI * f * i) / N + f0));
+      dataArr.push(value);
+    }
+    return dataArr;
+  }
+
+  //!This doesn't work
+
+  // const calculateFourierCoordinatesPolyharmonic = (x, N, k, A, f) => {
+  //   let dataArr = [];
+  //   const firstArr = x;
+  //   for (let i = 0; i < N; i += N / k) {
+  //     const val1 = A * Math.sin((2 * Math.PI * f * i) / N + f0);
+  //     const val2 =
+  //       ((2 * A2) / Math.PI) *
+  //       Math.asin(Math.sin((2 * Math.PI * f2 * i) / N + f02));
+  //     const value = val1+val2
+  //     dataArr.push(value);
+  //   }
+  //   console.log(dataArr);
+  //   return dataArr;
+  // };
+
+
+  // const kpoints = () => {
+  //   return calculateFourierCoordinates(
+  //     samplingFrequency,
+  //     frequency,
+  //     phase0,
+  //     amplitude,
+  //     kFourier
+  //   );
+  // }, [samplingFrequency, amplitude, phase0, frequency, kFourier]);
 
   const calcFourier = (points, N) => {
     const res = {
@@ -133,20 +185,20 @@ function App() {
     return res;
   };
 
-  const calcReverseFourier = (fourier, n, isHarmonic) => {
+  const calcReverseFourier = (fourier, n, isHarmonic, initialData0) => {
     const res = [];
-    const k = fourier.A.length;
+    const sampFreq = fourier.A.length;
     for (let i = 0; i < n; i++) {
       let signal = 0;
 
-      for (let j = isHarmonic ? 0 : 1; j < k / 2; j++) {
+      for (let j = isHarmonic ? 0 : 1; j < sampFreq / 2; j++) {
         signal +=
           fourier.A[j] *
           Math.cos((2 * Math.PI * i * j) / n - fourier.phases[j]);
       }
-      res.push(signal + (!isHarmonic ? fourier.A[0] / 2 : 0));
+      res.push(signal); //
     }
-    return res;
+    return res
   };
 
   let sinusData = generateSinusData(
@@ -200,28 +252,54 @@ function App() {
   let triangleAmpSpectrum = [];
   let trianglePhaseSpectrum = []; 
 
-  const sinYCoordinates = sinusData.map((v) => v.y);
-  const rectYCoordinates = rectangleData.map((v) => v.y);
-  const triangleYCoordinates = triangleData.map((v) => v.y);
+  let fourierTransformedSawlike = [];
+  let sawAmpSpectrum = [];
+  let sawPhaseSpectrum = []; 
+
+  let fourierTransformedPolyharmonic = [];
+  let polyharmonicAmpSpectrum = [];
+  let polyharmonicPhaseSpectrum = []; 
+
+
+  const sinYCoordinates = calculateFourierCoordinatesSinus(samplingFrequency, frequency, phase0, amplitude, kFourier)
+  const rectYCoordinates = calculateFourierCoordinatesRectangle(samplingFrequency, 1/frequency, amplitude, dutyCycle, kFourier)
+  const triangleYCoordinates = calculateFourierCoordinatesTriangle(amplitude, frequency, samplingFrequency, phase0, kFourier)
+  const sawYCoordinates = calculateFourierCoordinatesSawlike(amplitude, samplingFrequency, kFourier, frequency, phase0)
+  const polyharmonicCoordinates = calculateFourierCoordinatesPolyharmonic()
+  
   // const transformedData = useMemo(() => calcFourier(kpoints, samplingFrequency), [kFourier, samplingFrequency, amplitude, phase0, frequency]);
   if (isFourierTransformed) {
     // console.log('kpoints: ', yCoordinaties);
     let transformedData = calcFourier(sinYCoordinates, samplingFrequency)
+    console.log(transformedData);
     sinAmpSpectrum = transformedData.A
     sinPhaseSpectrum = transformedData.phases
-    fourierTransformedSinus = calcReverseFourier(transformedData, samplingFrequency, true );
+    fourierTransformedSinus = calcReverseFourier(transformedData, samplingFrequency, true, sinusData[0].y);
     
     transformedData = calcFourier(rectYCoordinates, samplingFrequency)
     rectAmpSpectrum = transformedData.A
     rectPhaseSpectrum = transformedData.phases
-    fourierTransformedRectangle = calcReverseFourier(transformedData, samplingFrequency, false)
+    fourierTransformedRectangle = calcReverseFourier(transformedData, samplingFrequency, false, rectangleData[0].y)
 
     transformedData = calcFourier(triangleYCoordinates, samplingFrequency);
     triangleAmpSpectrum = transformedData.A
     trianglePhaseSpectrum = transformedData.phases
-    fourierTransformedTriangle = calcReverseFourier(transformedData, samplingFrequency, false)
+    fourierTransformedTriangle = calcReverseFourier(transformedData, samplingFrequency, false, triangleData[0].y)
     
+    transformedData = calcFourier(sawYCoordinates, samplingFrequency);
+    sawAmpSpectrum = transformedData.A
+    sawPhaseSpectrum = transformedData.phases
+    fourierTransformedSawlike = calcReverseFourier(transformedData, samplingFrequency, false, sawlikeData[0].y)
 
+    transformedData = calcFourier(sawYCoordinates, samplingFrequency);
+    sawAmpSpectrum = transformedData.A;
+    sawPhaseSpectrum = transformedData.phases;
+    fourierTransformedSawlike = calcReverseFourier(
+      transformedData,
+      samplingFrequency,
+      false,
+      sawlikeData[0].y
+    );
 
   }
 
@@ -255,12 +333,24 @@ function App() {
     return { y: v, n: ind + 1 };
   });
 
+  fourierTransformedSawlike = fourierTransformedSawlike.map((v, ind) => {
+    return { y: v, n: ind + 1 };
+  });
+  sawAmpSpectrum = sawAmpSpectrum.map((v, ind) => {
+    return { y: v, n: ind + 1 };
+  });
+  sawPhaseSpectrum = sawPhaseSpectrum.map((v, ind) => {
+    return { y: v, n: ind + 1 };
+  });
+
+
   const sinAndFourierSum = addChartData(fourierTransformedSinus, sinusData);
   const rectAndFourierSum = addChartData(fourierTransformedRectangle, rectangleData);
   const triangleAndFourierSum = addChartData(
     fourierTransformedTriangle,
     triangleData
   );
+  const sawAndFourierSum = addChartData(fourierTransformedSawlike, sawlikeData);
 
   return (
     <div className="bg-blue-50 p-5 h-full">
@@ -457,7 +547,9 @@ function App() {
             formula={"x=f(n)"}
             chartName={"Triangle"}
             otherData={
-              isFourierTransformed ? [fourierTransformedTriangle, triangleAndFourierSum] : undefined
+              isFourierTransformed
+                ? [fourierTransformedTriangle, triangleAndFourierSum]
+                : undefined
             }
           ></Plot>
           {isFourierTransformed && (
@@ -476,7 +568,21 @@ function App() {
             data={sawlikeData}
             formula={"x=f(n)"}
             chartName={"Sawlike"}
+            otherData={
+              isFourierTransformed
+                ? [fourierTransformedSawlike, sawAndFourierSum]
+                : undefined
+            }
           ></Plot>
+          {isFourierTransformed && (
+            <>
+              <Plot
+                data={sawAmpSpectrum}
+                chartName={"Amplitude spectrum"}
+              ></Plot>
+              <Plot data={sawPhaseSpectrum} chartName={"Phase spectrum"}></Plot>
+            </>
+          )}
           <Plot
             data={sumOfData}
             formula={"x=f(n)"}
