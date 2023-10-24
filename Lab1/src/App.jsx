@@ -9,7 +9,7 @@ const { Title } = Typography;
 
 function App() {
   const [amplitude, setAmplitude] = useState(0.5);
-  const [frequency, setFrequency] = useState(5);
+  const [frequency, setFrequency] = useState(1);
   const [samplingFrequency, setSamplingFrequency] = useState(50);
   const [dutyCycle, setDutyCycle] = useState(0.5);
   const [phase0, setPhase0] = useState(0);
@@ -20,7 +20,7 @@ function App() {
   const [carrierPhase, setCarrierPhase] = useState(0);
 
   const [isFourierTransformed, setIsFourierTransformed] = useState(false);
-  const [kFourier, setKFourier] = useState(0);
+  const [kFourier, setKFourier] = useState(6);
 
   const generateSinusData = (a, f, N, phi0) => {
     const data = [];
@@ -113,7 +113,6 @@ function App() {
       aSin: [],
       phases: [],
     };
-    const n = N;
     const k = points.length;
     for (let j = 0; j < k; j++) {
       let cos = 0;
@@ -131,6 +130,7 @@ function App() {
       res.A.push(Math.sqrt(sin * sin + cos * cos));
       res.phases.push(Math.atan2(sin, cos));
     }
+    return res;
   };
 
   const calcReverseFourier = (fourier, n, isHarmonic) => {
@@ -188,17 +188,79 @@ function App() {
     addChartData(triangleData, sawlikeData)
   );
 
-  let otherData = [];
+  let fourierTransformedSinus = [];
+  let sinAmpSpectrum = [];
+  let sinPhaseSpectrum = []; 
+
+  let fourierTransformedRectangle = []
+  let rectAmpSpectrum = [];
+  let rectPhaseSpectrum = []; 
+
+  let fourierTransformedTriangle = [];
+  let triangleAmpSpectrum = [];
+  let trianglePhaseSpectrum = []; 
+
+  const sinYCoordinates = sinusData.map((v) => v.y);
+  const rectYCoordinates = rectangleData.map((v) => v.y);
+  const triangleYCoordinates = triangleData.map((v) => v.y);
+  // const transformedData = useMemo(() => calcFourier(kpoints, samplingFrequency), [kFourier, samplingFrequency, amplitude, phase0, frequency]);
   if (isFourierTransformed) {
-    const yCoordinaties = sinusData.map((v) => v.y);
-    console.log(yCoordinaties);
-    const transformedData = calcFourier(kpoints, samplingFrequency);
-    console.log(transformedData); //!undefined
-    otherData = calcReverseFourier(transformedData, samplingFrequency, true);
+    // console.log('kpoints: ', yCoordinaties);
+    let transformedData = calcFourier(sinYCoordinates, samplingFrequency)
+    sinAmpSpectrum = transformedData.A
+    sinPhaseSpectrum = transformedData.phases
+    fourierTransformedSinus = calcReverseFourier(transformedData, samplingFrequency, true );
+    
+    transformedData = calcFourier(rectYCoordinates, samplingFrequency)
+    rectAmpSpectrum = transformedData.A
+    rectPhaseSpectrum = transformedData.phases
+    fourierTransformedRectangle = calcReverseFourier(transformedData, samplingFrequency, false)
+
+    transformedData = calcFourier(triangleYCoordinates, samplingFrequency);
+    triangleAmpSpectrum = transformedData.A
+    trianglePhaseSpectrum = transformedData.phases
+    fourierTransformedTriangle = calcReverseFourier(transformedData, samplingFrequency, false)
+    
+
+
   }
-  otherData = otherData.map((v, ind) => {
+
+  fourierTransformedSinus = fourierTransformedSinus.map((v, ind) => {
     return { y: v, n: ind + 1 };
   });
+  sinAmpSpectrum = sinAmpSpectrum.map((v, ind) => {
+    return { y: v, n: ind + 1 };
+  })
+  sinPhaseSpectrum = sinPhaseSpectrum.map((v, ind) => {
+    return { y: v, n: ind + 1 };
+  });
+
+  fourierTransformedRectangle = fourierTransformedRectangle.map((v, ind) => {
+    return { y: v, n: ind + 1 };
+  });
+  rectAmpSpectrum = rectAmpSpectrum.map((v, ind) => {
+    return { y: v, n: ind + 1 };
+  });
+  rectPhaseSpectrum = rectPhaseSpectrum.map((v, ind) => {
+    return { y: v, n: ind + 1 };
+  });
+
+  fourierTransformedTriangle = fourierTransformedTriangle.map((v, ind) => {
+    return { y: v, n: ind + 1 };
+  });
+  triangleAmpSpectrum = triangleAmpSpectrum.map((v, ind) => {
+    return { y: v, n: ind + 1 };
+  });
+  trianglePhaseSpectrum = trianglePhaseSpectrum.map((v, ind) => {
+    return { y: v, n: ind + 1 };
+  });
+
+  const sinAndFourierSum = addChartData(fourierTransformedSinus, sinusData);
+  const rectAndFourierSum = addChartData(fourierTransformedRectangle, rectangleData);
+  const triangleAndFourierSum = addChartData(
+    fourierTransformedTriangle,
+    triangleData
+  );
 
   return (
     <div className="bg-blue-50 p-5 h-full">
@@ -355,28 +417,61 @@ function App() {
             chartName={"Sinus"}
             otherData={
               isFourierTransformed
-                ? [
-                    generateSinusData(
-                      amplitude + 2,
-                      frequency - 1,
-                      samplingFrequency,
-                      phase0 + 2
-                    ),
-                    otherData,
-                  ]
+                ? [fourierTransformedSinus, sinAndFourierSum]
                 : undefined
             }
           ></Plot>
+          {isFourierTransformed && (
+            <>
+              <Plot
+                data={sinAmpSpectrum}
+                chartName={"Amplitude spectrum"}
+              ></Plot>
+              <Plot data={sinPhaseSpectrum} chartName={"Phase spectrum"}></Plot>
+            </>
+          )}
           <Plot
             data={rectangleData}
             formula={"x=f(n)"}
             chartName={"Rectangle"}
+            otherData={
+              isFourierTransformed
+                ? [fourierTransformedRectangle, rectAndFourierSum]
+                : undefined
+            }
           ></Plot>
+          {isFourierTransformed && (
+            <>
+              <Plot
+                data={rectAmpSpectrum}
+                chartName={"Amplitude spectrum"}
+              ></Plot>
+              <Plot
+                data={rectPhaseSpectrum}
+                chartName={"Phase spectrum"}
+              ></Plot>
+            </>
+          )}
           <Plot
             data={triangleData}
             formula={"x=f(n)"}
             chartName={"Triangle"}
+            otherData={
+              isFourierTransformed ? [fourierTransformedTriangle, triangleAndFourierSum] : undefined
+            }
           ></Plot>
+          {isFourierTransformed && (
+            <>
+              <Plot
+                data={triangleAmpSpectrum}
+                chartName={"Amplitude spectrum"}
+              ></Plot>
+              <Plot
+                data={trianglePhaseSpectrum}
+                chartName={"Phase spectrum"}
+              ></Plot>
+            </>
+          )}
           <Plot
             data={sawlikeData}
             formula={"x=f(n)"}
@@ -385,7 +480,7 @@ function App() {
           <Plot
             data={sumOfData}
             formula={"x=f(n)"}
-            chartName={"Sum of charts"}
+            chartName={"Polyharmonic"}
           ></Plot>
         </div>
       </div>

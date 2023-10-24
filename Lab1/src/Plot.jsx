@@ -10,8 +10,23 @@ import {
 } from "recharts";
 
 const Plot = ({ data, formula, chartName, otherData }) => {
-  if (otherData?.length == 1) {
-    otherData[0]
+  if (otherData?.length > 0) {
+    if (otherData[0][0].y0 === undefined)
+      otherData[0] = otherData[0].map((v) => {
+        return { n: v.n, y0: v.y };
+      });
+    if (otherData.length > 1 && otherData[1][0].y1 === undefined)
+      otherData[1] = otherData[1].map((v) => {return {n: v.n, y1: v.y}})
+    // data = data.map((v, ind) => {return {...data, ...otherData[1][ind]}})
+    for (let i = 0; i < otherData.length; i++) {
+      data = data.map((objA) => {
+        const correspondingObjB = otherData[i].find((objB) => objB.n === objA.n);
+        // const next = ind > 0 ? objA : {y:0}
+        return {...objA, ...correspondingObjB };
+      });
+
+    }
+    // console.log(data)
   }
   return (
     <>
@@ -28,26 +43,26 @@ const Plot = ({ data, formula, chartName, otherData }) => {
           {otherData?.length > 0 && (
             <Line
               type="monotone"
-              dataKey="y"
+              dataKey="y0"
               stroke="#f02943"
               name="fourier transformed"
-              data={otherData[0]}
+              // data={otherData[0]}
             />
           )}
           {otherData?.length > 1 && (
             <Line
               type="monotone"
-              dataKey="y"
-              stroke="#f02943"
+              dataKey="y1"
+              stroke="#050505"
               name="sum"
-              data={otherData[1]}
+              // data={otherData[1]}
             />
           )}
           {otherData?.length > 2 && (
             <Line
               type="monotone"
               dataKey="y"
-              stroke="#050505"
+              stroke="#6efa02"
               data={otherData[2]}
             />
           )}
