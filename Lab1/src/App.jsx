@@ -198,7 +198,11 @@ function App() {
     return res;
   };
 
-  const calcReverseFourierPolyharmonic = (fourier, n, phasesIncluded = true) => {
+  const calcReverseFourierPolyharmonic = (
+    fourier,
+    n,
+    phasesIncluded = true
+  ) => {
     const res = [];
     let currPhase;
     const sampFreq = fourier.A.length;
@@ -209,8 +213,7 @@ function App() {
         if (phasesIncluded) currPhase = fourier.phases[j];
         else currPhase = 0;
         signal +=
-          fourier.A[j] *
-          Math.cos((2 * Math.PI * i * j) / n - currPhase);
+          fourier.A[j] * Math.cos((2 * Math.PI * i * j) / n - currPhase);
       }
       res.push(signal); //
     }
@@ -277,7 +280,7 @@ function App() {
   let polyharmonicAmpSpectrum = [];
   let polyharmonicPhaseSpectrum = [];
 
-  const sinYCoordinates = calculateFourierCoordinatesSinus(
+  let sinYCoordinates = calculateFourierCoordinatesSinus(
     samplingFrequency,
     frequency,
     phase0,
@@ -307,10 +310,32 @@ function App() {
     frequency,
     phase0
   );
+
+  //* Checkup before proceeding
+  if (isFourierTransformed && isAmplitudeModulated) {
+    let sinYCoordinatesMap = sinYCoordinates.map((val, ind) => {
+      return { n: ind + 1, y: val };
+    });
+    sinYCoordinatesMap = modulateAmplitude(
+      carrierAmplitude,
+      samplingFrequency,
+      sinYCoordinatesMap,
+      carrierFrequency,
+      carrierPhase
+    );
+    sinYCoordinates = sinYCoordinatesMap.map((value) => value.y);
+    console.log(sinYCoordinates);
+    console.log(sinusData.map(value => value.y))
+  }
   // * This works
   const polyharmonicYCoordinates = sinYCoordinates.map((val, ind) => {
-    return val + rectYCoordinates[ind] + triangleYCoordinates[ind] + sawYCoordinates[ind];
-  })
+    return (
+      val +
+      rectYCoordinates[ind] +
+      triangleYCoordinates[ind] +
+      sawYCoordinates[ind]
+    );
+  });
 
   if (isFourierTransformed) {
     let transformedData = calcFourier(sinYCoordinates, samplingFrequency);
@@ -358,7 +383,7 @@ function App() {
     polyharmonicPhaseSpectrum = transformedData.phases;
     fourierTransformedPolyharmonic = calcReverseFourierPolyharmonic(
       transformedData,
-      samplingFrequency,
+      samplingFrequency
     );
     fourierTransformedPolyharmonicNOPHI = calcReverseFourierPolyharmonic(
       transformedData,
@@ -407,9 +432,11 @@ function App() {
     return { y: v, n: ind + 1 };
   });
 
-  fourierTransformedPolyharmonic = fourierTransformedPolyharmonic.map((v, ind) => {
-    return { y: v, n: ind + 1 };
-  });
+  fourierTransformedPolyharmonic = fourierTransformedPolyharmonic.map(
+    (v, ind) => {
+      return { y: v, n: ind + 1 };
+    }
+  );
   fourierTransformedPolyharmonicNOPHI = fourierTransformedPolyharmonicNOPHI.map(
     (v, ind) => {
       return { y: v, n: ind + 1 };
@@ -421,7 +448,6 @@ function App() {
   polyharmonicPhaseSpectrum = polyharmonicPhaseSpectrum.map((v, ind) => {
     return { y: v, n: ind + 1 };
   });
-  
 
   // const sinAndFourierSum = addChartData(fourierTransformedSinus, sinusData);
   // const rectAndFourierSum = addChartData(fourierTransformedRectangle, rectangleData);
@@ -653,7 +679,10 @@ function App() {
                 data={polyharmonicAmpSpectrum}
                 chartName={"Amplitude spectrum"}
               ></Plot>
-              <Plot data={polyharmonicPhaseSpectrum} chartName={"Phase spectrum"}></Plot>
+              <Plot
+                data={polyharmonicPhaseSpectrum}
+                chartName={"Phase spectrum"}
+              ></Plot>
             </>
           )}
         </div>
