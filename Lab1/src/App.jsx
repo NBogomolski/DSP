@@ -20,7 +20,7 @@ function App() {
   const [carrierPhase, setCarrierPhase] = useState(0);
 
   const [isFourierTransformed, setIsFourierTransformed] = useState(false);
-  const [kFourier, setKFourier] = useState(6);
+  const [kFourier, setKFourier] = useState(samplingFrequency);
 
   const generateSinusData = (a, f, N, phi0) => {
     const data = [];
