@@ -54,7 +54,7 @@ const Plot = ({ data, formula, chartName, otherData }) => {
               type="monotone"
               dataKey="y1"
               stroke="#050505"
-              name="sum"
+              name="Phases excluded"
               // data={otherData[1]}
             />
           )}
