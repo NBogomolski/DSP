@@ -46,7 +46,6 @@ const Plot = ({ data, formula, chartName, otherData }) => {
               dataKey="y0"
               stroke="#f02943"
               name="fourier transformed"
-              // data={otherData[0]}
             />
           )}
           {otherData?.length > 1 && (
@@ -55,7 +54,6 @@ const Plot = ({ data, formula, chartName, otherData }) => {
               dataKey="y1"
               stroke="#050505"
               name="Phases excluded"
-              // data={otherData[1]}
             />
           )}
           {otherData?.length > 2 && (
@@ -69,7 +67,7 @@ const Plot = ({ data, formula, chartName, otherData }) => {
           {otherData?.length > 3 && (
             <Line
               type="monotone"
-              dataKey="y"
+              dataKey="sum"
               stroke="#6efa02"
               data={otherData[3]}
             />

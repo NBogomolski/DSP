@@ -4,6 +4,17 @@ import "./App.css";
 import { Label, RangeSlider, TextInput, ToggleSwitch } from "flowbite-react";
 import { Switch, Flex, Typography, InputNumber } from "antd";
 import { StyleProvider } from "@ant-design/cssinjs";
+import ControlPanel from "./ControlPanel.jsx";
+
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+} from "recharts";
 
 const { Title } = Typography;
 
@@ -21,6 +32,27 @@ function App() {
 
   const [isFourierTransformed, setIsFourierTransformed] = useState(false);
   const [kFourier, setKFourier] = useState(samplingFrequency);
+
+  const [secondFunc, setSecondFunc] = useState(false);
+  const [secondFuncAmplitude, set2ndFuncAmplitude] = useState(0.5);
+  const [secondFuncFrequency, set2ndFuncFrequency] = useState(2.5);
+  // const [secondFuncSamplingFrequency, set2ndFuncSamplingFrequency] = useState(50);
+  const [secondFuncDutyCycle, set2ndFuncDutyCycle] = useState(0.5);
+  const [secondFuncPhase0, set2ndFuncPhase0] = useState(0);
+
+  /* const changeSecondFunc = (states) => {
+    set2ndFuncAmplitude()
+  } */
+  const setParentAmplitude = (amp) => {
+    set2ndFuncAmplitude(amp);
+  }
+  const setParentFrequency = (amp) => {
+    set2ndFuncFrequency(amp);
+  };
+  const setParentPhase0 = (amp) => {
+    set2ndFuncPhase0(amp);
+  };
+
 
   const generateSinusData = (a, f, N, phi0) => {
     const data = [];
@@ -259,6 +291,14 @@ function App() {
     addChartData(triangleData, sawlikeData)
   );
 
+  const secondFuncSinus = generateSinusData(
+    secondFuncAmplitude,
+    secondFuncFrequency,
+    samplingFrequency,
+    secondFuncPhase0
+  )
+
+
   let fourierTransformedSinus = [];
   let sinAmpSpectrum = [];
   let sinPhaseSpectrum = [];
@@ -449,13 +489,15 @@ function App() {
     return { y: v, n: ind + 1 };
   });
 
-  // const sinAndFourierSum = addChartData(fourierTransformedSinus, sinusData);
-  // const rectAndFourierSum = addChartData(fourierTransformedRectangle, rectangleData);
-  // const triangleAndFourierSum = addChartData(
-  //   fourierTransformedTriangle,
-  //   triangleData
-  // );
-  // const sawAndFourierSum = addChartData(fourierTransformedSawlike, sawlikeData);
+  const sumOfSinusAnd2ndFunc = addChartData(sinusData, secondFuncSinus)
+  const resultingSinusOtherData = [];
+  if (isFourierTransformed) resultingSinusOtherData.push(fourierTransformedSinus);
+  if (secondFunc) {
+    resultingSinusOtherData.push(secondFuncSinus);
+  }
+
+  console.log(secondFuncSinus)
+
 
   return (
     <div className="bg-blue-50 p-5 h-full">
@@ -571,6 +613,23 @@ function App() {
               onChange={() => setIsFourierTransformed(!isFourierTransformed)}
             />
           </Flex>
+          <Flex align="center">
+            <Title level={3}>Second function</Title>
+            <Switch
+              id="second-function"
+              label="Second function"
+              checked={secondFunc}
+              onChange={() => setSecondFunc(!secondFunc)}
+            />
+          </Flex>
+          {secondFunc && (
+            <ControlPanel
+              setParentAmplitude={setParentAmplitude}
+              setParentFrequency={setParentFrequency}
+              // setParentSamplingFrequency={setParentSamplingFrequency}
+              setParentPhase0={setParentPhase0}
+            />
+          )}
           {isFourierTransformed && (
             <div className="flex items-center">
               <Title level={3}>k</Title>
@@ -590,9 +649,7 @@ function App() {
             data={sinusData}
             formula={"x=f(n)"}
             chartName={"Sinus"}
-            otherData={
-              isFourierTransformed ? [fourierTransformedSinus] : undefined
-            }
+            otherData={resultingSinusOtherData}
           ></Plot>
           {isFourierTransformed && (
             <>
@@ -684,6 +741,34 @@ function App() {
                 chartName={"Phase spectrum"}
               ></Plot>
             </>
+          )}
+          {secondFunc && (
+            <div className="chart-container w-fit">
+              <h3 className="text-lg font-bold">{"Polyharmonic custom"}</h3>
+              <LineChart width={1000} height={400} data={sumOfSinusAnd2ndFunc}>
+                <XAxis dataKey="n" />
+                <YAxis
+                  domain={[-1, 1]}
+                  tickFormatter={(num) => num.toFixed(2)}
+                />
+                <CartesianGrid stroke="#ccc" />
+                <Tooltip />
+                <Legend />
+                <Line
+                  type="monotone"
+                  dataKey="y"
+                  stroke="#8884d8"
+                  name={"Sum of sinus and 2nd function"}
+                />
+              </LineChart>
+              <Line
+                type="monotone"
+                data={secondFunc}
+                dataKey="y0"
+                stroke="#f02943"
+                name="Second function"
+              />
+            </div>
           )}
         </div>
       </div>
