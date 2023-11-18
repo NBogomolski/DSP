@@ -160,6 +160,11 @@ function App() {
     return dataArr;
   };
 
+  // function calculateFourierCoordinatesPolyharmonic(data1, data2) {
+  //   const res = [];
+  //   let N = data1.length;
+  //   for (let i = 0; i < data1.length; i += ) {
+  // }
   //!This doesn't work
 
   // const calculateFourierCoordinatesPolyharmonic = (x, N, k, A, f) => {
@@ -297,7 +302,7 @@ function App() {
     samplingFrequency,
     secondFuncPhase0
   )
-
+  
 
   let fourierTransformedSinus = [];
   let sinAmpSpectrum = [];
@@ -319,6 +324,10 @@ function App() {
   let fourierTransformedPolyharmonicNOPHI = [];
   let polyharmonicAmpSpectrum = [];
   let polyharmonicPhaseSpectrum = [];
+
+  let fourierTransformedCustomPolyharmonic = [];
+  let customPolyharmonicAmpSpectrum = [];
+  let customPolyharmonicPhaseSpectrum = [];
 
   let sinYCoordinates = calculateFourierCoordinatesSinus(
     samplingFrequency,
@@ -377,6 +386,10 @@ function App() {
     );
   });
 
+  const customPolyharmonic = addChartData(sinusData, secondFuncSinus);
+  let secondFuncYCoordinates = calculateFourierCoordinatesSinus(samplingFrequency, secondFuncFrequency, secondFuncPhase0, secondFuncAmplitude, kFourier)
+  const customPolyharmonicYCoordinates = sinYCoordinates.map((v, ind) => v + secondFuncYCoordinates[ind]);
+
   if (isFourierTransformed) {
     let transformedData = calcFourier(sinYCoordinates, samplingFrequency);
     sinAmpSpectrum = transformedData.A;
@@ -430,6 +443,11 @@ function App() {
       samplingFrequency,
       false
     );
+
+    transformedData = calcFourier(customPolyharmonicYCoordinates, samplingFrequency);
+    customPolyharmonicAmpSpectrum = transformedData.A;
+    customPolyharmonicPhaseSpectrum = transformedData.phases;
+    fourierTransformedCustomPolyharmonic = calcReverseFourier(transformedData, samplingFrequency);
   }
 
   fourierTransformedSinus = fourierTransformedSinus.map((v, ind) => {
@@ -489,15 +507,23 @@ function App() {
     return { y: v, n: ind + 1 };
   });
 
-  const sumOfSinusAnd2ndFunc = addChartData(sinusData, secondFuncSinus)
+  fourierTransformedCustomPolyharmonic = fourierTransformedCustomPolyharmonic.map((v, ind) => {
+    return {y0: v, n: ind + 1};
+  });
+  customPolyharmonicAmpSpectrum = customPolyharmonicAmpSpectrum.map((v, ind) => {
+    return { y: v, n: ind + 1 };
+  });
+  customPolyharmonicPhaseSpectrum = customPolyharmonicPhaseSpectrum.map((v, ind) => {
+    return { y: v, n: ind + 1 };
+  });
+  console.log(fourierTransformedCustomPolyharmonic)
+
   const resultingSinusOtherData = [];
-  if (isFourierTransformed) resultingSinusOtherData.push(fourierTransformedSinus);
+  if (isFourierTransformed)
+    resultingSinusOtherData.push(fourierTransformedSinus);
   if (secondFunc) {
     resultingSinusOtherData.push(secondFuncSinus);
   }
-
-  console.log(secondFuncSinus)
-
 
   return (
     <div className="bg-blue-50 p-5 h-full">
@@ -745,7 +771,7 @@ function App() {
           {secondFunc && (
             <div className="chart-container w-fit">
               <h3 className="text-lg font-bold">{"Polyharmonic custom"}</h3>
-              <LineChart width={1000} height={400} data={sumOfSinusAnd2ndFunc}>
+              <LineChart width={1000} height={400} data={customPolyharmonic}>
                 <XAxis dataKey="n" />
                 <YAxis
                   domain={[-1, 1]}
@@ -763,12 +789,24 @@ function App() {
               </LineChart>
               <Line
                 type="monotone"
-                data={secondFunc}
                 dataKey="y0"
+                data={fourierTransformedCustomPolyharmonic}
                 stroke="#f02943"
                 name="Second function"
               />
             </div>
+          )}
+          {isFourierTransformed && secondFunc && (
+            <>
+              <Plot
+                data={customPolyharmonicAmpSpectrum}
+                chartName={"Amplitude spectrum"}
+              ></Plot>
+              <Plot
+                data={customPolyharmonicPhaseSpectrum}
+                chartName={"Phase spectrum"}
+              ></Plot>
+            </>
           )}
         </div>
       </div>
