@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import Plot from "./Plot.jsx";
 import "./App.css";
 import { Label, RangeSlider, TextInput, ToggleSwitch } from "flowbite-react";
-import { Switch, Flex, Typography, InputNumber } from "antd";
+import { Switch, Flex, Typography, InputNumber, Card } from "antd";
 import { StyleProvider } from "@ant-design/cssinjs";
 import ControlPanel from "./ControlPanel.jsx";
 
@@ -165,32 +165,7 @@ function App() {
   //   let N = data1.length;
   //   for (let i = 0; i < data1.length; i += ) {
   // }
-  //!This doesn't work
 
-  // const calculateFourierCoordinatesPolyharmonic = (x, N, k, A, f) => {
-  //   let dataArr = [];
-  //   const firstArr = x;
-  //   for (let i = 0; i < N; i += N / k) {
-  //     const val1 = A * Math.sin((2 * Math.PI * f * i) / N + f0);
-  //     const val2 =
-  //       ((2 * A2) / Math.PI) *
-  //       Math.asin(Math.sin((2 * Math.PI * f2 * i) / N + f02));
-  //     const value = val1+val2
-  //     dataArr.push(value);
-  //   }
-  //   console.log(dataArr);
-  //   return dataArr;
-  // };
-
-  // const kpoints = () => {
-  //   return calculateFourierCoordinates(
-  //     samplingFrequency,
-  //     frequency,
-  //     phase0,
-  //     amplitude,
-  //     kFourier
-  //   );
-  // }, [samplingFrequency, amplitude, phase0, frequency, kFourier]);
 
   const calcFourier = (points, N) => {
     const res = {
@@ -386,7 +361,7 @@ function App() {
     );
   });
 
-  const customPolyharmonic = addChartData(sinusData, secondFuncSinus);
+  let customPolyharmonic = addChartData(sinusData, secondFuncSinus);
   let secondFuncYCoordinates = calculateFourierCoordinatesSinus(samplingFrequency, secondFuncFrequency, secondFuncPhase0, secondFuncAmplitude, kFourier)
   const customPolyharmonicYCoordinates = sinYCoordinates.map((v, ind) => v + secondFuncYCoordinates[ind]);
 
@@ -508,7 +483,7 @@ function App() {
   });
 
   fourierTransformedCustomPolyharmonic = fourierTransformedCustomPolyharmonic.map((v, ind) => {
-    return {y0: v, n: ind + 1};
+    return {y: v, n: ind + 1};
   });
   customPolyharmonicAmpSpectrum = customPolyharmonicAmpSpectrum.map((v, ind) => {
     return { y: v, n: ind + 1 };
@@ -516,14 +491,27 @@ function App() {
   customPolyharmonicPhaseSpectrum = customPolyharmonicPhaseSpectrum.map((v, ind) => {
     return { y: v, n: ind + 1 };
   });
-  console.log(fourierTransformedCustomPolyharmonic)
+  // console.log(fourierTransformedCustomPolyharmonic)
+
+  customPolyharmonic = customPolyharmonic.map((value, ind) => {
+    return {
+      ...value, sin: sinusData[ind].y, secondFunc: secondFuncSinus[ind].y
+    }
+  }) 
+
 
   const resultingSinusOtherData = [];
-  if (isFourierTransformed)
+  if (isFourierTransformed) {
     resultingSinusOtherData.push(fourierTransformedSinus);
-  if (secondFunc) {
-    resultingSinusOtherData.push(secondFuncSinus);
+    customPolyharmonic = customPolyharmonic.map((v, ind) => {
+      return {
+        ...v, fourierTransformed: fourierTransformedCustomPolyharmonic[ind].y
+      }
+    })
   }
+  // if (secondFunc) {
+  //   resultingSinusOtherData.push(secondFuncSinus);
+  // }
 
   return (
     <div className="bg-blue-50 p-5 h-full">
@@ -649,12 +637,14 @@ function App() {
             />
           </Flex>
           {secondFunc && (
-            <ControlPanel
-              setParentAmplitude={setParentAmplitude}
-              setParentFrequency={setParentFrequency}
-              // setParentSamplingFrequency={setParentSamplingFrequency}
-              setParentPhase0={setParentPhase0}
-            />
+            <Card className="w-fit">
+              <ControlPanel
+                setParentAmplitude={setParentAmplitude}
+                setParentFrequency={setParentFrequency}
+                // setParentSamplingFrequency={setParentSamplingFrequency}
+                setParentPhase0={setParentPhase0}
+              />
+            </Card>
           )}
           {isFourierTransformed && (
             <div className="flex items-center">
@@ -770,11 +760,11 @@ function App() {
           )}
           {secondFunc && (
             <div className="chart-container w-fit">
-              <h3 className="text-lg font-bold">{"Polyharmonic custom"}</h3>
+              <h3 className="text-lg font-bold">{"Custom polyharmonic"}</h3>
               <LineChart width={1000} height={400} data={customPolyharmonic}>
                 <XAxis dataKey="n" />
                 <YAxis
-                  domain={[-1, 1]}
+                  domain={[-2, 2]}
                   tickFormatter={(num) => num.toFixed(2)}
                 />
                 <CartesianGrid stroke="#ccc" />
@@ -786,14 +776,25 @@ function App() {
                   stroke="#8884d8"
                   name={"Sum of sinus and 2nd function"}
                 />
+                <Line
+                  type="monotone"
+                  dataKey="sin"
+                  stroke="#f02943"
+                  name="Sinus"
+                />
+                <Line
+                  type="monotone"
+                  dataKey="secondFunc"
+                  stroke="green"
+                  name="Second sin"
+                />
+                {isFourierTransformed && <Line
+                  type="monotone"
+                  dataKey="fourierTransformed"
+                  stroke="black"
+                  name="Fourier transformed"
+                />}
               </LineChart>
-              <Line
-                type="monotone"
-                dataKey="y0"
-                data={fourierTransformedCustomPolyharmonic}
-                stroke="#f02943"
-                name="Second function"
-              />
             </div>
           )}
           {isFourierTransformed && secondFunc && (
