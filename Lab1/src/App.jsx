@@ -422,7 +422,7 @@ function App() {
     transformedData = calcFourier(customPolyharmonicYCoordinates, samplingFrequency);
     customPolyharmonicAmpSpectrum = transformedData.A;
     customPolyharmonicPhaseSpectrum = transformedData.phases;
-    fourierTransformedCustomPolyharmonic = calcReverseFourier(transformedData, samplingFrequency);
+    fourierTransformedCustomPolyharmonic = calcReverseFourierPolyharmonic(transformedData, samplingFrequency);
   }
 
   fourierTransformedSinus = fourierTransformedSinus.map((v, ind) => {
@@ -491,7 +491,6 @@ function App() {
   customPolyharmonicPhaseSpectrum = customPolyharmonicPhaseSpectrum.map((v, ind) => {
     return { y: v, n: ind + 1 };
   });
-  // console.log(fourierTransformedCustomPolyharmonic)
 
   customPolyharmonic = customPolyharmonic.map((value, ind) => {
     return {

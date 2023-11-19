@@ -44,7 +44,7 @@ const ControlPanel = (props) => {
         sizing="lg"
         onChange={(e) => setFrequency(e.target.value / 10)}
       />
-      <Label
+      {/* <Label
         htmlFor="duty-cycle"
         value={"Duty cycle " + dutyCycle}
         color="black"
@@ -54,14 +54,14 @@ const ControlPanel = (props) => {
         id="duty-cycle"
         sizing="lg"
         onChange={(e) => setDutyCycle(e.target.value / 100)}
-      />
+      /> */}
       <Label value={"Phase 0"} color="black" className="text-2xl" />
       <InputNumber
         className="my-2"
         placeholder="phi0"
         min={0}
         max={100}
-        value={props.phase0}
+        value={phase0}
         onChange={(value) => setPhase0(value)}
       />
     </>
