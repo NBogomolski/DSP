@@ -1,0 +1,29 @@
+.image-container {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+.image-container .images-container {
+  display: flex;
+  flex-direction: row;
+  gap: 40px;
+}
+.image-container .images-container .image-loaded {
+  width: 600px;
+  height: 800px;
+}
+.image-container .images-container .image-after {
+  width: 600px;
+  height: 800px;
+}
+.image-container .images-container .image-btn-container {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+.image-container .images-container .image-btn-container button {
+  width: 200px;
+  height: 100px;
+  font-size: 25px;
+  border-radius: 5px;
+}/*# sourceMappingURL=Image.css.map */
