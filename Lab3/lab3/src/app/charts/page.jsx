@@ -3,9 +3,10 @@
 import { useState, useMemo } from "react";
 import Plot from "@/components/Plot";
 import { Label, RangeSlider, TextInput, ToggleSwitch } from "flowbite-react";
-import { Switch, Flex, Typography, InputNumber, Card, Button } from "antd";
+import { Switch, Flex, Typography, InputNumber, Card, Button, Select } from "antd";
 import { StyleProvider } from "@ant-design/cssinjs";
 import ControlPanel from "@/components/ControlPanel.jsx";
+import FilterPlot from '@/components/FilterPlot' 
 
 import {
   LineChart,
@@ -17,6 +18,18 @@ import {
   Legend,
 } from "recharts";
 import Link from "next/link";
+
+import {
+  calcFourier,
+  calcReverseFourier,
+  getData,
+  arithmeticAveraging,
+  parabolaAveraging,
+  medianaAveraging,
+  LFFilter,
+  HFFilter,
+  BandpassFilter,
+} from "../shared/utility/index";
 
 const { Title } = Typography;
 
@@ -41,6 +54,8 @@ function Charts() {
   // const [secondFuncSamplingFrequency, set2ndFuncSamplingFrequency] = useState(50);
   const [secondFuncDutyCycle, set2ndFuncDutyCycle] = useState(0.5);
   const [secondFuncPhase0, set2ndFuncPhase0] = useState(0);
+
+  const [selectedAveraging, setSelectedAveraging] = useState("arithmetic");
 
   /* const changeSecondFunc = (states) => {
     set2ndFuncAmplitude()
@@ -533,9 +548,9 @@ function Charts() {
   // }
 
   return (
-    <div className="p-5 h-full">
-      <div className="flex flex-row justify-end">
-        <div className="flex flex-col w-3/12 fixed z-50">
+    <div className="h-full">
+      <div className="flex flex-row-reverse justify-end">
+        <div className="flex flex-col w-fit z-50 p-5">
           <Link href="/">
             <Button type="primary">Main menu</Button>
           </Link>
@@ -681,8 +696,23 @@ function Charts() {
               />
             </div>
           )}
+          <Select
+            defaultValue="arithmetic"
+            onChange={(value) => setSelectedAveraging(value)}
+            options={[
+              { value: "arithmetic", label: "Arithmetic" },
+              { value: "parabola", label: "Parabola" },
+              { value: "mediana", label: "Median" },
+              { value: "HFF", label: "HFF" },
+              { value: "LFF", label: "LFF" },
+              { value: "Bandpass", label: "Bandpass" },
+            ]}
+          />
         </div>
-        <div className="flex flex-col flex-grow p-5 w-fit self-end">
+        <div className="flex flex-col p-5 w-fit self-start">
+          <FilterPlot data={sinusData} chartName={"Filtered"}></FilterPlot>
+        </div>
+        <div className="flex flex-col p-5 w-fit self-start">
           <Plot
             data={sinusData}
             formula={"x=f(n)"}
