@@ -11,9 +11,9 @@ import {
 
 const FilterPlot = ({ data, chartName }) => {
     console.log(data)
-    // data = data.map((value, ind) => {
-    //   return {y: value, n: ind+1}
-    // })
+    data = data.map((value, ind) => {
+      return {y: value, n: ind+1}
+    })
 
   return (
     <>

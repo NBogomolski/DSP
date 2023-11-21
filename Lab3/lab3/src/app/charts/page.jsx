@@ -29,7 +29,7 @@ import {
   LFFilter,
   HFFilter,
   BandpassFilter,
-} from "../shared/utility/index";
+} from "@/app/shared/utility";
 
 const { Title } = Typography;
 
@@ -56,7 +56,9 @@ function Charts() {
   const [secondFuncPhase0, set2ndFuncPhase0] = useState(0);
 
   const [selectedAveraging, setSelectedAveraging] = useState("arithmetic");
-
+  const [KBig, setKBig] = useState(1);
+  const [threshold, setThreshold] = useState(0)
+  const [upperThreshold, setUpperThreshold] = useState(0);
   /* const changeSecondFunc = (states) => {
     set2ndFuncAmplitude()
   } */
@@ -245,6 +247,67 @@ function Charts() {
       res.push(signal); //
     }
     return res;
+  };
+
+  const getAveragedXSinus = (data, KBig) => {
+    switch (selectedAveraging) {
+      case "arithmetic": {
+        return arithmeticAveraging(data, KBig);
+      }
+      case "parabola": {
+        return parabolaAveraging(data);
+      }
+      case "mediana": {
+        return medianaAveraging(data, KBig);
+      }
+      default: {
+        return [];
+      }
+    }
+  };
+
+  const getAveragedKpointsSinus = (sum, KBig, N, k) => {
+    let dataArr = [];
+    let kp = [];
+    switch (selectedAveraging) {
+      case "arithmetic": {
+        kp = arithmeticAveraging(sum, KBig);
+        break;
+      }
+      case "parabola": {
+        kp = parabolaAveraging(sum);
+        break;
+      }
+      case "mediana": {
+        kp = medianaAveraging(sum, KBig);
+        break;
+      }
+      default: {
+        break;
+      }
+    }
+    for (let i = 0; i < N; i += N / k) {
+      const value = kp[i];
+      dataArr.push(value);
+    }
+    return dataArr;
+  };
+
+  const getFilteredFourier = (fourier, threshold, upperThreshold) => {
+    switch (selectedAveraging) {
+      case "HFF": {
+        return HFFilter(fourier, freq1);
+      }
+      case "LFF": {
+        return LFFilter(fourier, freq1);
+      }
+      case "Bandpass": {
+        return BandpassFilter(fourier, freq1, freq2);
+      }
+      default: {
+        return [];
+      }
+    }
   };
 
   let sinusData = generateSinusData(
@@ -453,6 +516,12 @@ function Charts() {
     );
   }
 
+  //!FILTERS
+  const averagedSinus = getAveragedXSinus(sinYCoordinates, KBig);
+  const averagedYCoordSinus = getAveragedKpointsSinus(sinYCoordinates, KBig, samplingFrequency, kFourier);
+  const averagedFourier = calcFourier(averagedYCoordSinus, samplingFrequency);
+  const averagedReversedFourier = calcReverseFourier(averagedFourier, samplingFrequency, true);
+
   fourierTransformedSinus = fourierTransformedSinus.map((v, ind) => {
     return { y: v, n: ind + 1 };
   });
@@ -554,6 +623,43 @@ function Charts() {
           <Link href="/">
             <Button type="primary">Main menu</Button>
           </Link>
+          <Label
+            htmlFor="KBig"
+            value={"K " + KBig}
+            color="black"
+            className="text-2xl"
+          />
+          <RangeSlider
+            id="KBig"
+            sizing="lg"
+            onChange={(e) => setKBig(e.target.value)}
+          />
+          <Label
+            htmlFor="fThreshold"
+            value={"Threshold " + threshold}
+            color="black"
+            className="text-2xl"
+          />
+          <RangeSlider
+            id="fThreshold"
+            sizing="lg"
+            onChange={(e) => setThreshold(e.target.value)}
+          />
+          {selectedAveraging === 'Bandpass' && (
+            <>
+              <Label
+                htmlFor="fUpperThreshold"
+                value={"Upper threshold " + upperThreshold}
+                color="black"
+                className="text-2xl"
+              />
+              <RangeSlider
+                id="fUpperThreshold"
+                sizing="lg"
+                onChange={(e) => setUpperThreshold(e.target.value)}
+              />
+            </>
+          )}
           <Label
             htmlFor="amplitude"
             value={"Amplitude " + amplitude}
@@ -709,8 +815,9 @@ function Charts() {
             ]}
           />
         </div>
-        <div className="flex flex-col p-5 w-fit self-start">
-          <FilterPlot data={sinusData} chartName={"Filtered"}></FilterPlot>
+        <div className="flex flex-col p-5 w-fit self-start"> 
+          {/*!Filter plots */}
+          <FilterPlot data={averagedSinus} chartName={"Filtered sinus"}></FilterPlot>
         </div>
         <div className="flex flex-col p-5 w-fit self-start">
           <Plot
