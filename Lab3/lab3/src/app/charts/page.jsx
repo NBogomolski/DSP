@@ -249,13 +249,20 @@ function Charts() {
     return res;
   };
 
-  const getAveragedXSinus = (data, KBig) => {
+  function applyParabolicAverageFilter(signal) {
+    for (let i = 1; i < signal.length - 1; i++) {
+      signal[i] = (signal[i - 1] + signal[i] + signal[i + 1]) / 3;
+    }
+    return signal;
+  }
+
+  const getFilteredTimeDomain = (data, KBig) => {
     switch (selectedAveraging) {
       case "arithmetic": {
         return arithmeticAveraging(data, KBig);
       }
       case "parabola": {
-        return parabolaAveraging(data);
+        return applyParabolicAverageFilter(data);
       }
       case "mediana": {
         return medianaAveraging(data, KBig);
@@ -448,7 +455,12 @@ function Charts() {
     (v, ind) => v + secondFuncYCoordinates[ind]
   );
 
-  let filteredSinFreq, filteredRectFreq, filteredTriangleFreq, filteredSawFreq;
+  let filteredSinFreq,
+    filteredRectFreq,
+    filteredTriangleFreq,
+    filteredSawFreq,
+    filteredPolyharmonicFreq,
+    filteredCustomPolyharmonicFreq;
 
   if (isFourierTransformed) {
     let transformedData = calcFourier(sinYCoordinates, samplingFrequency);
@@ -510,6 +522,7 @@ function Charts() {
     transformedData = calcFourier(polyharmonicYCoordinates, samplingFrequency);
     polyharmonicAmpSpectrum = transformedData.A;
     polyharmonicPhaseSpectrum = transformedData.phases;
+    filteredPolyharmonicFreq = getFilteredFourier(transformedData, threshold, upperThreshold);
     fourierTransformedPolyharmonic = calcReverseFourierPolyharmonic(
       transformedData,
       samplingFrequency
@@ -526,6 +539,7 @@ function Charts() {
     );
     customPolyharmonicAmpSpectrum = transformedData.A;
     customPolyharmonicPhaseSpectrum = transformedData.phases;
+    filteredCustomPolyharmonicFreq = getFilteredFourier(transformedData, threshold, upperThreshold);
     fourierTransformedCustomPolyharmonic = calcReverseFourierPolyharmonic(
       transformedData,
       samplingFrequency
@@ -533,17 +547,25 @@ function Charts() {
   }
 
   //!FILTERS
-  const averagedSinus = getAveragedXSinus(sinYCoordinates, KBig);
-  const averagedYCoordSinus = getAveragedKpointsSinus(sinYCoordinates, KBig, samplingFrequency, kFourier);
+  const filteredSinus = getFilteredTimeDomain(sinYCoordinates, KBig);
+  // const averagedYCoordSinus = getAveragedKpointsSinus(sinYCoordinates, KBig, samplingFrequency, kFourier);
   // const averagedFourier = calcFourier(averagedYCoordSinus, samplingFrequency);
-  let averagedReversedFourier;
-  if (filteredSinFreq?.A)
-    averagedReversedFourier = calcReverseFourier(filteredSinFreq, samplingFrequency, true);
-  console.log(averagedReversedFourier)
+  let filteredSinReverseFourier, filteredRectReverseFourier, filteredTriangleReverseFourier, filteredSawReverseFourier, filteredCustomPolyharmonicRevFourier, filteredPolyharmonicRevFourier;
+  if (isFourierTransformed && filteredSinFreq?.A) {
+    filteredSinReverseFourier = calcReverseFourier(filteredSinFreq, samplingFrequency, true);
+    filteredRectReverseFourier = calcReverseFourier(filteredRectFreq, samplingFrequency, false);
+    filteredTriangleReverseFourier = calcReverseFourier(filteredTriangleFreq, samplingFrequency, false);
+    filteredSawReverseFourier = calcReverseFourier(filteredSawFreq, samplingFrequency, false);
+    filteredPolyharmonicRevFourier = calcReverseFourier(filteredPolyharmonicFreq, samplingFrequency, true);
+    filteredCustomPolyharmonicRevFourier = calcReverseFourier(filteredCustomPolyharmonicFreq, samplingFrequency, true);
+  }
+  console.log(filteredSinReverseFourier)
 
-  const filteredRectangle = getAveragedXSinus(rectYCoordinates, KBig);
-  const filteredTriangle = getAveragedXSinus(triangleYCoordinates, KBig);
-  const filteredSawlike = getAveragedXSinus(sawYCoordinates, KBig);
+  const filteredRectangle = getFilteredTimeDomain(rectYCoordinates, KBig);
+  const filteredTriangle = getFilteredTimeDomain(triangleYCoordinates, KBig);
+  const filteredSawlike = getFilteredTimeDomain(sawYCoordinates, KBig);
+  const filteredPolyharmonic = getFilteredTimeDomain(polyharmonicYCoordinates, KBig);
+  const filteredCustomPolyharmonic = getFilteredTimeDomain(customPolyharmonicYCoordinates, KBig);
 
   fourierTransformedSinus = fourierTransformedSinus.map((v, ind) => {
     return { y: v, n: ind + 1 };
@@ -640,205 +662,211 @@ function Charts() {
     <div className="h-full">
       <div className="flex flex-row-reverse justify-end">
         <div className="flex flex-col w-fit z-50 p-5">
-          <Link href="/">
-            <Button type="primary">Main menu</Button>
-          </Link>
-          <Label
-            htmlFor="KBig"
-            value={"K " + KBig}
-            color="black"
-            className="text-2xl"
-          />
-          <RangeSlider
-            id="KBig"
-            sizing="lg"
-            onChange={(e) => setKBig(e.target.value)}
-          />
-          <Label
-            htmlFor="fThreshold"
-            value={"Threshold " + threshold}
-            color="black"
-            className="text-2xl"
-          />
-          <RangeSlider
-            id="fThreshold"
-            sizing="lg"
-            onChange={(e) => setThreshold(e.target.value)}
-          />
-          {selectedAveraging === "Bandpass" && (
-            <>
-              <Label
-                htmlFor="fUpperThreshold"
-                value={"Upper threshold " + upperThreshold}
-                color="black"
-                className="text-2xl"
-              />
-              <RangeSlider
-                id="fUpperThreshold"
-                sizing="lg"
-                onChange={(e) => setUpperThreshold(e.target.value)}
-              />
-            </>
-          )}
-          <Label
-            htmlFor="amplitude"
-            value={"Amplitude " + amplitude}
-            color="black"
-            className="text-2xl"
-          />
-          <RangeSlider
-            id="amplitude"
-            sizing="lg"
-            onChange={(e) => setAmplitude(e.target.value / 100)}
-          />
-          <Label
-            htmlFor="frequency"
-            value={"Frequency " + frequency}
-            color="black"
-            className="text-2xl"
-          />
-          <RangeSlider
-            id="frequency"
-            sizing="lg"
-            onChange={(e) => setFrequency(e.target.value / 10)}
-          />
-          <Label
-            htmlFor="sampling-frequency"
-            value={"Sampling frequency " + samplingFrequency}
-            color="black"
-            className="text-2xl"
-          />
-          <RangeSlider
-            id="sampling-frequency"
-            sizing="lg"
-            onChange={(e) => setSamplingFrequency(e.target.value)}
-          />
-          <Label
-            htmlFor="duty-cycle"
-            value={"Duty cycle " + dutyCycle}
-            color="black"
-            className="text-2xl"
-          />
-          <RangeSlider
-            id="sampling-frequency"
-            sizing="lg"
-            onChange={(e) => setDutyCycle(e.target.value / 100)}
-          />
-          <Label value={"Phase 0"} color="black" className="text-2xl" />
-          <InputNumber
-            className="my-2"
-            placeholder="phi0"
-            min={0}
-            max={100}
-            value={phase0}
-            onChange={(value) => setPhase0(value)}
-          />
-          <div>
-            <StyleProvider hashPriority={"high"}>
-              <Flex align="center">
-                <Title level={3}>Amplitude Modulation</Title>
-                <Switch
-                  id="amplitude-modulation"
-                  label="Amplitude modulation"
-                  checked={isAmplitudeModulated}
-                  onChange={() =>
-                    setIsAmplitudeModulated(!isAmplitudeModulated)
-                  }
+          <div className="fixed flex flex-col">
+            <Link href="/">
+              <Button type="primary">Main menu</Button>
+            </Link>
+            <Label
+              htmlFor="KBig"
+              value={"K " + KBig}
+              color="black"
+              className="text-2xl"
+            />
+            <RangeSlider
+              id="KBig"
+              sizing="lg"
+              onChange={(e) => setKBig(e.target.value)}
+            />
+            <Label
+              htmlFor="fThreshold"
+              value={"Threshold " + threshold}
+              color="black"
+              className="text-2xl"
+            />
+            <RangeSlider
+              id="fThreshold"
+              sizing="lg"
+              onChange={(e) => setThreshold(e.target.value)}
+            />
+            {selectedAveraging === "Bandpass" && (
+              <>
+                <Label
+                  htmlFor="fUpperThreshold"
+                  value={"Upper threshold " + upperThreshold}
+                  color="black"
+                  className="text-2xl"
                 />
-              </Flex>
-            </StyleProvider>
-          </div>
-          {isAmplitudeModulated && (
-            <>
-              <h1 className="text-xl">Carrier signal</h1>
-              <Label
-                htmlFor="amplitude-carrier"
-                value={"Amplitude " + carrierAmplitude}
-                color="black"
-                className="text-lg"
-              />
-              <RangeSlider
-                id="amplitude-carrier"
-                sizing="lg"
-                onChange={(e) => setCarrierAmplitude(e.target.value / 100)}
-              />
-              <Label
-                htmlFor="frequency-carrier"
-                value={"Frequency " + carrierFrequency}
-                color="black"
-                className="text-lg"
-              />
-              <RangeSlider
-                id="frequency-carrier"
-                sizing="lg"
-                onChange={(e) => setCarrierFrequency(e.target.value / 10)}
-              />
-              <TextInput
-                placeholder="phi0"
-                type="number"
-                value={carrierPhase}
-                onChange={(e) => setCarrierPhase(e.target.value)}
-              />
-            </>
-          )}
-          <Flex align="center">
-            <Title level={3}>Fourier Transformation</Title>
-            <Switch
-              id="fourier-transformation"
-              label="Fourier Transformation"
-              checked={isFourierTransformed}
-              onChange={() => setIsFourierTransformed(!isFourierTransformed)}
+                <RangeSlider
+                  id="fUpperThreshold"
+                  sizing="lg"
+                  onChange={(e) => setUpperThreshold(e.target.value)}
+                />
+              </>
+            )}
+            <Label
+              htmlFor="amplitude"
+              value={"Amplitude " + amplitude}
+              color="black"
+              className="text-2xl"
             />
-          </Flex>
-          <Flex align="center">
-            <Title level={3}>Second function</Title>
-            <Switch
-              id="second-function"
-              label="Second function"
-              checked={secondFunc}
-              onChange={() => setSecondFunc(!secondFunc)}
+            <RangeSlider
+              id="amplitude"
+              sizing="lg"
+              onChange={(e) => setAmplitude(e.target.value / 100)}
             />
-          </Flex>
-          {secondFunc && (
-            <Card className="w-fit">
-              <ControlPanel
-                setParentAmplitude={setParentAmplitude}
-                setParentFrequency={setParentFrequency}
-                // setParentSamplingFrequency={setParentSamplingFrequency}
-                setParentPhase0={setParentPhase0}
-              />
-            </Card>
-          )}
-          {isFourierTransformed && (
-            <div className="flex items-center">
-              <Title level={3}>k</Title>
-              <InputNumber
-                className="m-2"
-                placeholder="k"
-                min={0}
-                max={100}
-                value={kFourier}
-                onChange={(value) => setKFourier(value)}
-              />
+            <Label
+              htmlFor="frequency"
+              value={"Frequency " + frequency}
+              color="black"
+              className="text-2xl"
+            />
+            <RangeSlider
+              id="frequency"
+              sizing="lg"
+              onChange={(e) => setFrequency(e.target.value / 10)}
+            />
+            <Label
+              htmlFor="sampling-frequency"
+              value={"Sampling frequency " + samplingFrequency}
+              color="black"
+              className="text-2xl"
+            />
+            <RangeSlider
+              id="sampling-frequency"
+              sizing="lg"
+              onChange={(e) => setSamplingFrequency(e.target.value)}
+            />
+            <Label
+              htmlFor="duty-cycle"
+              value={"Duty cycle " + dutyCycle}
+              color="black"
+              className="text-2xl"
+            />
+            <RangeSlider
+              id="sampling-frequency"
+              sizing="lg"
+              onChange={(e) => setDutyCycle(e.target.value / 100)}
+            />
+            <Label value={"Phase 0"} color="black" className="text-2xl" />
+            <InputNumber
+              className="my-2"
+              placeholder="phi0"
+              min={0}
+              max={100}
+              value={phase0}
+              onChange={(value) => setPhase0(value)}
+            />
+            <div>
+              <StyleProvider hashPriority={"high"}>
+                <Flex align="center">
+                  <Title level={3}>Amplitude Modulation</Title>
+                  <Switch
+                    id="amplitude-modulation"
+                    label="Amplitude modulation"
+                    checked={isAmplitudeModulated}
+                    onChange={() =>
+                      setIsAmplitudeModulated(!isAmplitudeModulated)
+                    }
+                  />
+                </Flex>
+              </StyleProvider>
             </div>
-          )}
-          <Select
-            defaultValue="arithmetic"
-            onChange={(value) => setSelectedAveraging(value)}
-            options={[
-              { value: "arithmetic", label: "Arithmetic" },
-              { value: "parabola", label: "Parabola" },
-              { value: "mediana", label: "Median" },
-              { value: "HFF", label: "HFF" },
-              { value: "LFF", label: "LFF" },
-              { value: "Bandpass", label: "Bandpass" },
-            ]}
-          />
+            {isAmplitudeModulated && (
+              <>
+                <h1 className="text-xl">Carrier signal</h1>
+                <Label
+                  htmlFor="amplitude-carrier"
+                  value={"Amplitude " + carrierAmplitude}
+                  color="black"
+                  className="text-lg"
+                />
+                <RangeSlider
+                  id="amplitude-carrier"
+                  sizing="lg"
+                  onChange={(e) => setCarrierAmplitude(e.target.value / 100)}
+                />
+                <Label
+                  htmlFor="frequency-carrier"
+                  value={"Frequency " + carrierFrequency}
+                  color="black"
+                  className="text-lg"
+                />
+                <RangeSlider
+                  id="frequency-carrier"
+                  sizing="lg"
+                  onChange={(e) => setCarrierFrequency(e.target.value / 10)}
+                />
+                <TextInput
+                  placeholder="phi0"
+                  type="number"
+                  value={carrierPhase}
+                  onChange={(e) => setCarrierPhase(e.target.value)}
+                />
+              </>
+            )}
+            <Flex align="center">
+              <Title level={3}>Fourier Transformation</Title>
+              <Switch
+                id="fourier-transformation"
+                label="Fourier Transformation"
+                checked={isFourierTransformed}
+                onChange={() => setIsFourierTransformed(!isFourierTransformed)}
+              />
+            </Flex>
+            <Flex align="center">
+              <Title level={3}>Second function</Title>
+              <Switch
+                id="second-function"
+                label="Second function"
+                checked={secondFunc}
+                onChange={() => setSecondFunc(!secondFunc)}
+              />
+            </Flex>
+            {secondFunc && (
+              <Card className="w-fit">
+                <ControlPanel
+                  setParentAmplitude={setParentAmplitude}
+                  setParentFrequency={setParentFrequency}
+                  // setParentSamplingFrequency={setParentSamplingFrequency}
+                  setParentPhase0={setParentPhase0}
+                />
+              </Card>
+            )}
+            {isFourierTransformed && (
+              <div className="flex items-center">
+                <Title level={3}>k</Title>
+                <InputNumber
+                  className="m-2"
+                  placeholder="k"
+                  min={0}
+                  max={100}
+                  value={kFourier}
+                  onChange={(value) => setKFourier(value)}
+                />
+              </div>
+            )}
+            <Select
+              defaultValue="arithmetic"
+              onChange={(value) => setSelectedAveraging(value)}
+              options={[
+                { value: "arithmetic", label: "Sliding averaging" },
+                { value: "parabola", label: "Parabolic averaging" },
+                { value: "mediana", label: "Median averaging" },
+                { value: "HFF", label: "HF filter" },
+                { value: "LFF", label: "LF filter" },
+                { value: "Bandpass", label: "Bandpass filter" },
+              ]}
+            />
+          </div>
         </div>
         <div className="flex flex-col p-5 w-fit self-start">
           {/*!Filter plots */}
           <FilterPlot
-            data={averagedReversedFourier}
+            data={
+              filteredSinReverseFourier
+                ? filteredSinReverseFourier
+                : filteredSinus
+            }
             chartName={"Filtered sinus"}
             // otherData={averagedReversedFourier}
           ></FilterPlot>
@@ -855,7 +883,11 @@ function Charts() {
             </>
           )}
           <FilterPlot
-            data={filteredRectangle}
+            data={
+              filteredRectReverseFourier
+                ? filteredRectReverseFourier
+                : filteredRectangle
+            }
             chartName={"Filtered rectangle"}
           ></FilterPlot>
           {isFourierTransformed && filteredRectFreq?.A && (
@@ -871,7 +903,11 @@ function Charts() {
             </>
           )}
           <FilterPlot
-            data={filteredTriangle}
+            data={
+              filteredTriangleReverseFourier
+                ? filteredTriangleReverseFourier
+                : filteredTriangle
+            }
             chartName={"Filtered triangle"}
           ></FilterPlot>
           {isFourierTransformed && filteredTriangleFreq?.A && (
@@ -887,7 +923,11 @@ function Charts() {
             </>
           )}
           <FilterPlot
-            data={filteredSawlike}
+            data={
+              filteredSawReverseFourier
+                ? filteredSawReverseFourier
+                : filteredSawlike
+            }
             chartName={"Filtered sawlike"}
           ></FilterPlot>
           {isFourierTransformed && filteredSawFreq?.A && (
@@ -898,6 +938,47 @@ function Charts() {
               ></FilterPlot>
               <FilterPlot
                 data={filteredSawFreq.phases}
+                chartName={"Filtered phase spectrum"}
+              ></FilterPlot>
+            </>
+          )}
+          {/* Polyharmonics */}
+          <FilterPlot
+            data={
+              filteredPolyharmonicRevFourier
+                ? filteredPolyharmonicRevFourier
+                : filteredPolyharmonic
+            }
+            chartName={"Filtered polyharmonic"}
+          ></FilterPlot>
+          {isFourierTransformed && filteredPolyharmonicFreq?.A && (
+            <>
+              <FilterPlot
+                data={filteredPolyharmonicFreq.A}
+                chartName={"Filtered amp spectrum"}
+              ></FilterPlot>
+              <FilterPlot
+                data={filteredPolyharmonicFreq.phases}
+                chartName={"Filtered phase spectrum"}
+              ></FilterPlot>
+            </>
+          )}
+          {secondFunc && <FilterPlot
+            data={
+              filteredCustomPolyharmonicRevFourier
+                ? filteredCustomPolyharmonicRevFourier
+                : filteredCustomPolyharmonic
+            }
+            chartName={"Filtered custom polyharmonic"}
+          ></FilterPlot>}
+          {secondFunc && isFourierTransformed && filteredCustomPolyharmonicFreq?.A && (
+            <>
+              <FilterPlot
+                data={filteredCustomPolyharmonicFreq.A}
+                chartName={"Filtered amp spectrum"}
+              ></FilterPlot>
+              <FilterPlot
+                data={filteredCustomPolyharmonicFreq.phases}
                 chartName={"Filtered phase spectrum"}
               ></FilterPlot>
             </>
@@ -1004,7 +1085,7 @@ function Charts() {
           {secondFunc && (
             <div className="chart-container w-fit">
               <h3 className="text-lg font-bold">{"Custom polyharmonic"}</h3>
-              <LineChart width={1000} height={400} data={customPolyharmonic}>
+              <LineChart width={750} height={400} data={customPolyharmonic}>
                 <XAxis dataKey="n" />
                 <YAxis
                   domain={[-2, 2]}
