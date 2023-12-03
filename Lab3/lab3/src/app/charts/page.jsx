@@ -296,13 +296,13 @@ function Charts() {
   const getFilteredFourier = (fourier, threshold, upperThreshold) => {
     switch (selectedAveraging) {
       case "HFF": {
-        return HFFilter(fourier, freq1);
+        return HFFilter(fourier, threshold);
       }
       case "LFF": {
-        return LFFilter(fourier, freq1);
+        return LFFilter(fourier, threshold);
       }
       case "Bandpass": {
-        return BandpassFilter(fourier, freq1, freq2);
+        return BandpassFilter(fourier, threshold, upperThreshold);
       }
       default: {
         return [];
@@ -425,8 +425,6 @@ function Charts() {
       carrierPhase
     );
     sinYCoordinates = sinYCoordinatesMap.map((value) => value.y);
-    console.log(sinYCoordinates);
-    console.log(sinusData.map((value) => value.y));
   }
   // * This works
   const polyharmonicYCoordinates = sinYCoordinates.map((val, ind) => {
@@ -450,10 +448,13 @@ function Charts() {
     (v, ind) => v + secondFuncYCoordinates[ind]
   );
 
+  let filteredSinFreq, filteredRectFreq, filteredTriangleFreq, filteredSawFreq;
+
   if (isFourierTransformed) {
     let transformedData = calcFourier(sinYCoordinates, samplingFrequency);
     sinAmpSpectrum = transformedData.A;
     sinPhaseSpectrum = transformedData.phases;
+    filteredSinFreq = getFilteredFourier(transformedData, threshold, upperThreshold);
     fourierTransformedSinus = calcReverseFourier(
       transformedData,
       samplingFrequency,
@@ -464,6 +465,11 @@ function Charts() {
     transformedData = calcFourier(rectYCoordinates, samplingFrequency);
     rectAmpSpectrum = transformedData.A;
     rectPhaseSpectrum = transformedData.phases;
+    filteredRectFreq = getFilteredFourier(
+      transformedData,
+      threshold,
+      upperThreshold
+    );
     fourierTransformedRectangle = calcReverseFourier(
       transformedData,
       samplingFrequency,
@@ -474,6 +480,11 @@ function Charts() {
     transformedData = calcFourier(triangleYCoordinates, samplingFrequency);
     triangleAmpSpectrum = transformedData.A;
     trianglePhaseSpectrum = transformedData.phases;
+    filteredTriangleFreq = getFilteredFourier(
+      transformedData,
+      threshold,
+      upperThreshold
+    );
     fourierTransformedTriangle = calcReverseFourier(
       transformedData,
       samplingFrequency,
@@ -484,6 +495,11 @@ function Charts() {
     transformedData = calcFourier(sawYCoordinates, samplingFrequency);
     sawAmpSpectrum = transformedData.A;
     sawPhaseSpectrum = transformedData.phases;
+    filteredSawFreq = getFilteredFourier(
+      transformedData,
+      threshold,
+      upperThreshold
+    );
     fourierTransformedSawlike = calcReverseFourier(
       transformedData,
       samplingFrequency,
@@ -519,8 +535,15 @@ function Charts() {
   //!FILTERS
   const averagedSinus = getAveragedXSinus(sinYCoordinates, KBig);
   const averagedYCoordSinus = getAveragedKpointsSinus(sinYCoordinates, KBig, samplingFrequency, kFourier);
-  const averagedFourier = calcFourier(averagedYCoordSinus, samplingFrequency);
-  const averagedReversedFourier = calcReverseFourier(averagedFourier, samplingFrequency, true);
+  // const averagedFourier = calcFourier(averagedYCoordSinus, samplingFrequency);
+  let averagedReversedFourier;
+  if (filteredSinFreq?.A)
+    averagedReversedFourier = calcReverseFourier(filteredSinFreq, samplingFrequency, true);
+  console.log(averagedReversedFourier)
+
+  const filteredRectangle = getAveragedXSinus(rectYCoordinates, KBig);
+  const filteredTriangle = getAveragedXSinus(triangleYCoordinates, KBig);
+  const filteredSawlike = getAveragedXSinus(sawYCoordinates, KBig);
 
   fourierTransformedSinus = fourierTransformedSinus.map((v, ind) => {
     return { y: v, n: ind + 1 };
@@ -612,9 +635,6 @@ function Charts() {
       };
     });
   }
-  // if (secondFunc) {
-  //   resultingSinusOtherData.push(secondFuncSinus);
-  // }
 
   return (
     <div className="h-full">
@@ -645,7 +665,7 @@ function Charts() {
             sizing="lg"
             onChange={(e) => setThreshold(e.target.value)}
           />
-          {selectedAveraging === 'Bandpass' && (
+          {selectedAveraging === "Bandpass" && (
             <>
               <Label
                 htmlFor="fUpperThreshold"
@@ -815,9 +835,73 @@ function Charts() {
             ]}
           />
         </div>
-        <div className="flex flex-col p-5 w-fit self-start"> 
+        <div className="flex flex-col p-5 w-fit self-start">
           {/*!Filter plots */}
-          <FilterPlot data={averagedSinus} chartName={"Filtered sinus"}></FilterPlot>
+          <FilterPlot
+            data={averagedReversedFourier}
+            chartName={"Filtered sinus"}
+            // otherData={averagedReversedFourier}
+          ></FilterPlot>
+          {isFourierTransformed && filteredSinFreq?.A && (
+            <>
+              <FilterPlot
+                data={filteredSinFreq.A}
+                chartName={"Filtered amp spectrum"}
+              ></FilterPlot>
+              <FilterPlot
+                data={filteredSinFreq.phases}
+                chartName={"Filtered phase spectrum"}
+              ></FilterPlot>
+            </>
+          )}
+          <FilterPlot
+            data={filteredRectangle}
+            chartName={"Filtered rectangle"}
+          ></FilterPlot>
+          {isFourierTransformed && filteredRectFreq?.A && (
+            <>
+              <FilterPlot
+                data={filteredRectFreq.A}
+                chartName={"Filtered amp spectrum"}
+              ></FilterPlot>
+              <FilterPlot
+                data={filteredRectFreq.phases}
+                chartName={"Filtered phase spectrum"}
+              ></FilterPlot>
+            </>
+          )}
+          <FilterPlot
+            data={filteredTriangle}
+            chartName={"Filtered triangle"}
+          ></FilterPlot>
+          {isFourierTransformed && filteredTriangleFreq?.A && (
+            <>
+              <FilterPlot
+                data={filteredTriangleFreq?.A}
+                chartName={"Filtered amp spectrum"}
+              ></FilterPlot>
+              <FilterPlot
+                data={filteredTriangleFreq?.phases}
+                chartName={"Filtered phase spectrum"}
+              ></FilterPlot>
+            </>
+          )}
+          <FilterPlot
+            data={filteredSawlike}
+            chartName={"Filtered sawlike"}
+          ></FilterPlot>
+          {isFourierTransformed && filteredSawFreq?.A && (
+            <>
+              <FilterPlot
+                data={filteredSawFreq.A}
+                chartName={"Filtered amp spectrum"}
+              ></FilterPlot>
+              <FilterPlot
+                data={filteredSawFreq.phases}
+                chartName={"Filtered phase spectrum"}
+              ></FilterPlot>
+            </>
+          )}
         </div>
         <div className="flex flex-col p-5 w-fit self-start">
           <Plot

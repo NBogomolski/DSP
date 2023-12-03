@@ -9,11 +9,13 @@ import {
   Legend,
 } from "recharts";
 
-const FilterPlot = ({ data, chartName }) => {
-    console.log(data)
-    data = data.map((value, ind) => {
+const FilterPlot = ({ data, chartName, otherData }) => {
+  
+  data = data.map((value, ind) => {
+    if (!otherData)
       return {y: value, n: ind+1}
-    })
+    else return {y: value, y0: otherData[ind], n: ind+1}
+  })
 
   return (
     <>
