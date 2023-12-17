@@ -181,3 +181,26 @@ export const BandpassFilter = (fourier, bound1, bound2) => {
   }
   return res;
 };
+
+export const applyCorrelation = (f, g) => {
+  const n = f.length
+  const m = g.length
+  const K = (n + m - 1 > 0) ? n + m - 1 : 0
+
+  let nSum = 0;
+  let mSum = 0;
+  console.log('k', K)
+  const result = Array(K).fill(0)
+  for (let i = 0; i < n; i++) {
+    nSum += f[i] ** 2
+    mSum += g[i] ** 2
+  }
+  const normalizeCoff = 1 / Math.sqrt(nSum * mSum)
+  for (let i = 0; i < n; i++) {
+    for (let j = 0; j < m; j++) {
+      result[i + j] += f[i] * g[j] * normalizeCoff
+    }
+  }
+  console.log('result', result)
+  return result
+}

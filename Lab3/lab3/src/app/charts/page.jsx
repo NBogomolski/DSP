@@ -29,6 +29,7 @@ import {
   LFFilter,
   HFFilter,
   BandpassFilter,
+  applyCorrelation,
 } from "@/app/shared/utility";
 
 const { Title } = Typography;
@@ -59,6 +60,8 @@ function Charts() {
   const [KBig, setKBig] = useState(1);
   const [threshold, setThreshold] = useState(0)
   const [upperThreshold, setUpperThreshold] = useState(0);
+
+  const [showCorrelation, setShowCorrelation] = useState(false);
   /* const changeSecondFunc = (states) => {
     set2ndFuncAmplitude()
   } */
@@ -567,6 +570,14 @@ function Charts() {
   const filteredPolyharmonic = getFilteredTimeDomain(polyharmonicYCoordinates, KBig);
   const filteredCustomPolyharmonic = getFilteredTimeDomain(customPolyharmonicYCoordinates, KBig);
 
+  //!Post-correlation values
+  const correlatedSinus = applyCorrelation(sinYCoordinates, sinYCoordinates)
+  const correlatedRectangle = applyCorrelation(rectYCoordinates, rectYCoordinates);  
+  const correlatedTriangle = applyCorrelation(triangleYCoordinates, triangleYCoordinates);
+  const correlatedSawlike = applyCorrelation(sawYCoordinates, sawYCoordinates);
+  const correlatedPolyharmonic = applyCorrelation(polyharmonicYCoordinates, polyharmonicYCoordinates);
+  const correlatedCustomPolyharmonic = applyCorrelation(customPolyharmonicYCoordinates, customPolyharmonicYCoordinates);
+
   fourierTransformedSinus = fourierTransformedSinus.map((v, ind) => {
     return { y: v, n: ind + 1 };
   });
@@ -723,7 +734,7 @@ function Charts() {
             <RangeSlider
               id="frequency"
               sizing="lg"
-              onChange={(e) => setFrequency(e.target.value / 10)}
+              onChange={(e) => setFrequency(e.target.value / 5)}
             />
             <Label
               htmlFor="sampling-frequency"
@@ -857,19 +868,34 @@ function Charts() {
                 { value: "Bandpass", label: "Bandpass filter" },
               ]}
             />
+            <div className="flex flex-col">
+              <Title level={3}>Apply Correlation</Title>
+              <Switch
+                id="Correlation"
+                label="Correlation"
+                checked={showCorrelation}
+                onChange={() => setShowCorrelation(!showCorrelation)}
+              />
+            </div>
           </div>
         </div>
         <div className="flex flex-col p-5 w-fit self-start">
           {/*!Filter plots */}
-          <FilterPlot
-            data={
-              filteredSinReverseFourier
-                ? filteredSinReverseFourier
-                : filteredSinus
-            }
-            chartName={"Filtered sinus"}
-            // otherData={averagedReversedFourier}
-          ></FilterPlot>
+          {showCorrelation ? (
+            <FilterPlot
+              data={correlatedSinus ? correlatedSinus : filteredSinus}
+              chartName="Correlated sinus"
+            />
+          ) : (
+            <FilterPlot
+              data={
+                filteredSinReverseFourier
+                  ? filteredSinReverseFourier
+                  : filteredSinus
+              }
+              chartName={"Filtered sinus"}
+            ></FilterPlot>
+          )}
           {isFourierTransformed && filteredSinFreq?.A && (
             <>
               <FilterPlot
@@ -882,14 +908,23 @@ function Charts() {
               ></FilterPlot>
             </>
           )}
-          <FilterPlot
-            data={
-              filteredRectReverseFourier
-                ? filteredRectReverseFourier
-                : filteredRectangle
-            }
-            chartName={"Filtered rectangle"}
-          ></FilterPlot>
+          {showCorrelation ? (
+            <FilterPlot
+              data={
+                correlatedRectangle ? correlatedRectangle : filteredRectangle
+              }
+              chartName="Correlated rectangle"
+            />
+          ) : (
+            <FilterPlot
+              data={
+                filteredRectReverseFourier
+                  ? filteredRectReverseFourier
+                  : filteredRectangle
+              }
+              chartName={"Filtered rectangle"}
+            ></FilterPlot>
+          )}
           {isFourierTransformed && filteredRectFreq?.A && (
             <>
               <FilterPlot
@@ -902,14 +937,21 @@ function Charts() {
               ></FilterPlot>
             </>
           )}
-          <FilterPlot
-            data={
-              filteredTriangleReverseFourier
-                ? filteredTriangleReverseFourier
-                : filteredTriangle
-            }
-            chartName={"Filtered triangle"}
-          ></FilterPlot>
+          {showCorrelation ? (
+            <FilterPlot
+              data={correlatedTriangle ? correlatedTriangle : filteredTriangle}
+              chartName="Correlated triangle"
+            />
+          ) : (
+            <FilterPlot
+              data={
+                filteredTriangleReverseFourier
+                  ? filteredTriangleReverseFourier
+                  : filteredTriangle
+              }
+              chartName={"Filtered triangle"}
+            ></FilterPlot>
+          )}
           {isFourierTransformed && filteredTriangleFreq?.A && (
             <>
               <FilterPlot
@@ -922,14 +964,23 @@ function Charts() {
               ></FilterPlot>
             </>
           )}
-          <FilterPlot
-            data={
-              filteredSawReverseFourier
-                ? filteredSawReverseFourier
-                : filteredSawlike
-            }
-            chartName={"Filtered sawlike"}
-          ></FilterPlot>
+          {showCorrelation ? (
+            <FilterPlot
+              data={
+                correlatedSawlike ? correlatedSawlike : filteredSawlike
+              }
+              chartName="Correlated sawlike"
+            />
+          ) : (
+            <FilterPlot
+              data={
+                filteredSawReverseFourier
+                  ? filteredSawReverseFourier
+                  : filteredSawlike
+              }
+              chartName={"Filtered sawlike"}
+            ></FilterPlot>
+          )}
           {isFourierTransformed && filteredSawFreq?.A && (
             <>
               <FilterPlot
@@ -943,14 +994,23 @@ function Charts() {
             </>
           )}
           {/* Polyharmonics */}
-          <FilterPlot
-            data={
-              filteredPolyharmonicRevFourier
-                ? filteredPolyharmonicRevFourier
-                : filteredPolyharmonic
-            }
-            chartName={"Filtered polyharmonic"}
-          ></FilterPlot>
+          {showCorrelation ? 
+            <FilterPlot
+              data = {
+                correlatedPolyharmonic ?
+                  correlatedPolyharmonic :
+                  filteredPolyharmonic
+              }
+              chartName="Correlated polyharmonic"
+            /> :
+            <FilterPlot
+              data={
+                filteredPolyharmonicRevFourier
+                  ? filteredPolyharmonicRevFourier
+                  : filteredPolyharmonic
+              }
+              chartName={"Filtered polyharmonic"}
+            ></FilterPlot>}
           {isFourierTransformed && filteredPolyharmonicFreq?.A && (
             <>
               <FilterPlot
@@ -963,26 +1023,39 @@ function Charts() {
               ></FilterPlot>
             </>
           )}
-          {secondFunc && <FilterPlot
-            data={
-              filteredCustomPolyharmonicRevFourier
-                ? filteredCustomPolyharmonicRevFourier
-                : filteredCustomPolyharmonic
-            }
-            chartName={"Filtered custom polyharmonic"}
-          ></FilterPlot>}
-          {secondFunc && isFourierTransformed && filteredCustomPolyharmonicFreq?.A && (
-            <>
-              <FilterPlot
-                data={filteredCustomPolyharmonicFreq.A}
-                chartName={"Filtered amp spectrum"}
-              ></FilterPlot>
-              <FilterPlot
-                data={filteredCustomPolyharmonicFreq.phases}
-                chartName={"Filtered phase spectrum"}
-              ></FilterPlot>
-            </>
+          {secondFunc && (
+            showCorrelation ? 
+            <FilterPlot
+              data = {
+                correlatedCustomPolyharmonic ?
+                  correlatedCustomPolyharmonic :
+                  filteredCustomPolyharmonic
+              }
+              chartName="Correlated custom polyharmonic"
+            /> :
+            <FilterPlot
+              data={
+                filteredCustomPolyharmonicRevFourier
+                  ? filteredCustomPolyharmonicRevFourier
+                  : filteredCustomPolyharmonic
+              }
+              chartName={"Filtered custom polyharmonic"}
+            ></FilterPlot>
           )}
+          {secondFunc &&
+            isFourierTransformed &&
+            filteredCustomPolyharmonicFreq?.A && (
+              <>
+                <FilterPlot
+                  data={filteredCustomPolyharmonicFreq.A}
+                  chartName={"Filtered amp spectrum"}
+                ></FilterPlot>
+                <FilterPlot
+                  data={filteredCustomPolyharmonicFreq.phases}
+                  chartName={"Filtered phase spectrum"}
+                ></FilterPlot>
+              </>
+            )}
         </div>
         <div className="flex flex-col p-5 w-fit self-start">
           <Plot
