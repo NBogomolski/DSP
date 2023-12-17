@@ -9,8 +9,11 @@ import {
   Legend,
 } from "recharts";
 
-const FilterPlot = ({ data, chartName, otherData }) => {
+const FilterPlot = ({ data, chartName, otherData, domain}) => {
   
+  let finalDomain = [-1, 1]; 
+  if (domain === null) finalDomain = undefined
+
   data = data.map((value, ind) => {
     if (!otherData)
       return {y: value, n: ind+1}
@@ -23,7 +26,7 @@ const FilterPlot = ({ data, chartName, otherData }) => {
         <h3 className="text-lg font-bold">{chartName}</h3>
         <LineChart width={750} height={400} data={data}>
           <XAxis dataKey="n" />
-          <YAxis domain={[-1, 1]} tickFormatter={(num) => num.toFixed(2)} />
+          <YAxis domain={finalDomain} tickFormatter={(num) => num.toFixed(2)} />
           <CartesianGrid stroke="#ccc" />
           <Tooltip />
           <Legend />

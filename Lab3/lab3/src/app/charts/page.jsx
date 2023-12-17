@@ -578,6 +578,10 @@ function Charts() {
   const correlatedPolyharmonic = applyCorrelation(polyharmonicYCoordinates, polyharmonicYCoordinates);
   const correlatedCustomPolyharmonic = applyCorrelation(customPolyharmonicYCoordinates, customPolyharmonicYCoordinates);
 
+  let mutuallyCorrelatedPolyharmonic = null
+  if (secondFunc)
+    mutuallyCorrelatedPolyharmonic = applyCorrelation(sinYCoordinates, secondFuncYCoordinates)
+
   fourierTransformedSinus = fourierTransformedSinus.map((v, ind) => {
     return { y: v, n: ind + 1 };
   });
@@ -966,9 +970,7 @@ function Charts() {
           )}
           {showCorrelation ? (
             <FilterPlot
-              data={
-                correlatedSawlike ? correlatedSawlike : filteredSawlike
-              }
+              data={correlatedSawlike ? correlatedSawlike : filteredSawlike}
               chartName="Correlated sawlike"
             />
           ) : (
@@ -994,15 +996,16 @@ function Charts() {
             </>
           )}
           {/* Polyharmonics */}
-          {showCorrelation ? 
+          {showCorrelation ? (
             <FilterPlot
-              data = {
-                correlatedPolyharmonic ?
-                  correlatedPolyharmonic :
-                  filteredPolyharmonic
+              data={
+                correlatedPolyharmonic
+                  ? correlatedPolyharmonic
+                  : filteredPolyharmonic
               }
               chartName="Correlated polyharmonic"
-            /> :
+            />
+          ) : (
             <FilterPlot
               data={
                 filteredPolyharmonicRevFourier
@@ -1010,7 +1013,8 @@ function Charts() {
                   : filteredPolyharmonic
               }
               chartName={"Filtered polyharmonic"}
-            ></FilterPlot>}
+            ></FilterPlot>
+          )}
           {isFourierTransformed && filteredPolyharmonicFreq?.A && (
             <>
               <FilterPlot
@@ -1023,25 +1027,36 @@ function Charts() {
               ></FilterPlot>
             </>
           )}
-          {secondFunc && (
-            showCorrelation ? 
-            <FilterPlot
-              data = {
-                correlatedCustomPolyharmonic ?
-                  correlatedCustomPolyharmonic :
-                  filteredCustomPolyharmonic
-              }
-              chartName="Correlated custom polyharmonic"
-            /> :
-            <FilterPlot
-              data={
-                filteredCustomPolyharmonicRevFourier
-                  ? filteredCustomPolyharmonicRevFourier
-                  : filteredCustomPolyharmonic
-              }
-              chartName={"Filtered custom polyharmonic"}
-            ></FilterPlot>
-          )}
+          {secondFunc &&
+            (showCorrelation ? (
+              <>
+                <FilterPlot
+                  data={
+                    correlatedCustomPolyharmonic
+                      ? correlatedCustomPolyharmonic
+                      : filteredCustomPolyharmonic
+                  }
+                  // otherData={mutuallyCorrelatedPolyharmonic}
+                  chartName="Correlated custom polyharmonic"
+                />
+                <FilterPlot
+                  data={
+                    mutuallyCorrelatedPolyharmonic
+                  }
+                  chartName={"Mutually correlated sin1 and sin2"}
+                  domain={null}
+                />
+              </>
+            ) : (
+              <FilterPlot
+                data={
+                  filteredCustomPolyharmonicRevFourier
+                    ? filteredCustomPolyharmonicRevFourier
+                    : filteredCustomPolyharmonic
+                }
+                chartName={"Filtered custom polyharmonic"}
+              ></FilterPlot>
+            ))}
           {secondFunc &&
             isFourierTransformed &&
             filteredCustomPolyharmonicFreq?.A && (
