@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import './Image.css'
 import { UploadOutlined } from "@ant-design/icons";
 import { Button, Input, message, Upload } from "antd";
@@ -56,8 +56,24 @@ function applyConvolutionKernel(imageData, kernel) {
 
 export default function page() {
   const [originalImage, setOriginalImage] = useState(null);
-  const [selectedImage, setSelectedImage] = useState(null);
+  const [patternImage, setPatternImage] = useState(null);
+  const [resultImage, setResultImage] = useState(null);
   const [appliedFilters, setAppliedFilters] = useState([]);
+
+  // useEffect(() => {
+  //   const sendImage = async () => {
+  //     const sent = await fetch("http://localhost:3000/correlation", {
+  //       method: "POST",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //         // Add any other headers as needed
+  //       },
+  //       body: JSON.stringify(originalImage),
+  //     });
+  //     console.log(sent)
+  //   };
+  //   sendImage()
+  // }, [originalImage]);
 
   const handleFileInputChange = (file) => {
     // const file = event.target.files[0];
@@ -65,7 +81,7 @@ export default function page() {
     const reader = new FileReader();
 
     reader.onload = () => {
-      setSelectedImage(reader.result);
+      setResultImage(reader.result);
       setOriginalImage(reader.result);
       setAppliedFilters([]); // Сброс примененных фильтров
     };
@@ -80,7 +96,7 @@ export default function page() {
     const ctx = canvas.getContext("2d");
 
     const img = new Image();
-    img.src = selectedImage;
+    img.src = resultImage;
 
     img.onload = () => {
       canvas.width = img.width;
@@ -101,15 +117,28 @@ export default function page() {
       const resultCtx = resultCanvas.getContext("2d");
       resultCtx.putImageData(resultImageData, 0, 0);
 
-      setSelectedImage(resultCanvas.toDataURL());
+      setResultImage(resultCanvas.toDataURL());
       setAppliedFilters([...appliedFilters, kernel]); // Сохранение примененного фильтра
     };
   };
 
   const clearFilters = () => {
-    setSelectedImage(originalImage);
+    setResultImage(originalImage);
     setAppliedFilters([]);
   };
+
+  const uploadPatternImage = (file) => {
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      
+      setPatternImage(reader.result);
+    };
+
+    if (file) {
+      reader.readAsDataURL(file);
+    }
+  }
 
 
   return (
@@ -136,7 +165,7 @@ export default function page() {
             ]);
           }}
         >
-          Apply Blur
+          Blur
         </Button>
         <Button
           size="large"
@@ -148,7 +177,7 @@ export default function page() {
             ]);
           }}
         >
-          Apply Sharpen
+          Sharpen
         </Button>
         <Button
           size="large"
@@ -160,7 +189,7 @@ export default function page() {
             ]);
           }}
         >
-          Apply Edge Detection
+          Edge Detection
         </Button>
         <Button
           size="large"
@@ -170,6 +199,39 @@ export default function page() {
         >
           Clear Filters
         </Button>
+        <div>
+          <Button
+            size="large"
+            onClick={async () => {
+              clearFilters();
+              const result = await fetch("http://localhost:3000/correlation", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  // Add any other headers as needed
+                },
+                body: JSON.stringify({
+                  referenceImage: originalImage,
+                  patternImage,
+                }),
+              });
+              const base64 = await result.json();
+              console.log(base64);
+              setResultImage(base64.data);
+            }}
+          >
+            Correlation
+          </Button>
+          <Input
+            type="file"
+            accept="image/*"
+            prefix={<UploadOutlined />}
+            onChange={(e) => uploadPatternImage(e.target.files[0])}
+            size="large"
+            className="cursor-pointer max-w-[120px]"
+            placeholder="Click to upload file"
+          />
+        </div>
         <Link href="/">
           <Button size="large">Main menu</Button>
         </Link>
@@ -180,7 +242,7 @@ export default function page() {
         onChange={(e) => handleFileInputChange(e.target.files[0])}
       /> */}
       <div className="images-container p-3">
-        {selectedImage && (
+        {resultImage && (
           <>
             <div className="image-wrapper">
               <h3>Original Image</h3>
@@ -194,49 +256,18 @@ export default function page() {
               <h3>Processed Image</h3>
               <img
                 className="image-after"
-                src={selectedImage}
+                src={resultImage}
                 alt="Processed"
               />
             </div>
-            {/* <div className="image-btn-container">
-              <button
-                onClick={() =>
-                  applyConvolution([
-                    [1 / 9, 1 / 9, 1 / 9],
-                    [1 / 9, 1 / 9, 1 / 9],
-                    [1 / 9, 1 / 9, 1 / 9],
-                  ])
-                }
-              >
-                Apply Blur
-              </button>
-              <button
-                onClick={() =>
-                  applyConvolution([
-                    [0, -1, 0],
-                    [-1, 5, -1],
-                    [0, -1, 0],
-                  ])
-                }
-              >
-                Apply Sharpen
-              </button>
-              <button
-                onClick={() =>
-                  applyConvolution([
-                    [-1, -1, -1],
-                    [-1, 8, -1],
-                    [-1, -1, -1],
-                  ])
-                }
-              >
-                Apply Edge Detection
-              </button>
-              <button onClick={clearFilters}>Clear Filters</button>
-            </div> */}
           </>
         )}
         <div className="applied-filters">
+          {patternImage && <>
+              <p>Pattern</p>
+              <img className="w-35" src={patternImage}/>
+            </>
+          }
           {appliedFilters.length > 0 && <h3>Applied Filters</h3>}
           <ul>
             {appliedFilters.map((filter, index) => (

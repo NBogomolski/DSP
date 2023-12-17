@@ -10,11 +10,11 @@
 }
 .image-container .images-container .image-loaded {
   width: 600px;
-  height: 800px;
+  /* height: 800px; */
 }
 .image-container .images-container .image-after {
   width: 600px;
-  height: 800px;
+  /* height: 800px; */
 }
 .image-container .images-container .image-btn-container {
   display: flex;
