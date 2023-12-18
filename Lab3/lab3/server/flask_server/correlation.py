@@ -25,6 +25,15 @@ def outline_pattern(reference_path, pattern_path, output_path):
         reference_image, top_left, (top_left[0] + w, top_left[1] + h), (0, 255, 0), 2
     )
 
+    heatmap = (result - min_val) / (max_val - min_val)
+    
+    # Display the heatmap
+    plt.imshow(heatmap, cmap="viridis", interpolation="nearest")
+    plt.axis('off')
+    heatmap_output_path = output_path.replace(".jpg", "_heatmap.jpg")
+    plt.savefig(heatmap_output_path, bbox_inches='tight', pad_inches=0)
+    plt.close() 
+
     # Save the result
     cv2.imwrite(output_path, reference_image)
 
@@ -52,6 +61,7 @@ def outline_auto_correlation(image_path, output_path):
     # Save the result
     cv2.imwrite(output_path, input_image)
 
+
 def create_correlation_heatmap(image_path, output_path):
     # Load the image
     image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
@@ -60,13 +70,18 @@ def create_correlation_heatmap(image_path, output_path):
     correlation_matrix = np.corrcoef(image)
 
     # Plot the correlation heatmap
-    plt.imshow(correlation_matrix, cmap="viridis", interpolation="nearest")
+    plt.imshow(
+        correlation_matrix,
+        cmap="viridis",
+        interpolation="nearest",
+        extent=[0, image.shape[1], 0, image.shape[0]],
+    )
     plt.colorbar()
     plt.title("Correlation Heatmap")
     plt.show()
 
     # Segment the image based on the correlation coefficients (example: thresholding)
-    threshold = 0.7
+    threshold = 0.9
     binary_segmentation = np.where(correlation_matrix > threshold, 255, 0).astype(
         np.uint8
     )
@@ -83,9 +98,9 @@ def create_correlation_heatmap(image_path, output_path):
 # if __name__ == "__main__":
 #     #     # Provide the paths to your images
 #     reference_image_path = "metallica.jpg"
-#     pattern_image_path = "ulrich.png"
+#     pattern_image_path = "hatfield.jpg"
 #     output_image_path = "result.jpg"
-#     create_correlation_heatmap(pattern_image_path, output_image_path)
-#     outline_auto_correlation(reference_image_path, output_image_path)
-#     # Call the function
+#     # create_correlation_heatmap(reference_image_path, output_image_path)
+# #     outline_auto_correlation(reference_image_path, output_image_path)
+# #     # Call the function
 #     outline_pattern(reference_image_path, pattern_image_path, output_image_path)

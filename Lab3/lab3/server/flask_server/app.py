@@ -4,6 +4,7 @@ import base64
 import io
 import cv2
 import numpy as np
+import os
 
 from correlation import outline_pattern
 
@@ -39,14 +40,17 @@ def handle_post():
         save_base64_image(ref_img, ref_img_path)
         save_base64_image(pattern_img, pattern_img_path)
 
-        outline_pattern(
-            ref_img_path,
-            pattern_img_path,
-            resulting_path
-        )
+        outline_pattern(ref_img_path, pattern_img_path, resulting_path)
         result_b64 = read_image_as_base64(resulting_path)
+        heatmap = read_image_as_base64(resulting_path.replace(".jpg", "_heatmap.jpg"))
         # Send a response back to the client
-        return jsonify({ "message": "Posted message received ", "resultingImage": result_b64 })
+        return jsonify(
+            {
+                "message": "Posted message received ",
+                "resultingImage": result_b64,
+                "heatmap": heatmap,
+            }
+        )
     except Exception as err:
         print(err)
         return jsonify({"error": str(err)})
@@ -65,7 +69,7 @@ def save_base64_image(base64_string, output_path):
 
         # Save the image to the specified output path
         cv2.imwrite(output_path, image)
-
+        os.chmod(output_path, 0o777)
         print(f"Image saved successfully at {output_path}")
     except Exception as e:
         print(f"Error: {e}")

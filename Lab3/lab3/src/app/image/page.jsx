@@ -58,22 +58,9 @@ export default function page() {
   const [originalImage, setOriginalImage] = useState(null);
   const [patternImage, setPatternImage] = useState(null);
   const [resultImage, setResultImage] = useState(null);
+  const [heatmap, setHeatmap] = useState(null);
   const [appliedFilters, setAppliedFilters] = useState([]);
 
-  // useEffect(() => {
-  //   const sendImage = async () => {
-  //     const sent = await fetch("http://localhost:3000/correlation", {
-  //       method: "POST",
-  //       headers: {
-  //         "Content-Type": "application/json",
-  //         // Add any other headers as needed
-  //       },
-  //       body: JSON.stringify(originalImage),
-  //     });
-  //     console.log(sent)
-  //   };
-  //   sendImage()
-  // }, [originalImage]);
 
   const handleFileInputChange = (file) => {
     // const file = event.target.files[0];
@@ -124,6 +111,7 @@ export default function page() {
 
   const clearFilters = () => {
     setResultImage(originalImage);
+    setHeatmap(null);
     setAppliedFilters([]);
   };
 
@@ -217,7 +205,8 @@ export default function page() {
               });
               const base64 = await result.json();
               console.log(base64);
-              setResultImage(base64.data);
+              setResultImage(base64.resultingImage);
+              setHeatmap(base64.heatmap)
             }}
           >
             Correlation
@@ -259,6 +248,8 @@ export default function page() {
                 src={resultImage}
                 alt="Processed"
               />
+              <h3>Correlation heatmap</h3>
+              <img src={heatmap} alt="Heatmap" />
             </div>
           </>
         )}

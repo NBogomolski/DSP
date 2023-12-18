@@ -22,12 +22,13 @@ export async function POST(req) {
     body: JSON.stringify(base64Codes),
   });
 
-  const resultingImage = await pyRequest.json();
+  const images = await pyRequest.json();
 
   const responseObject = {
-    data: metadata + resultingImage['resultingImage'],
+      resultingImage: metadata + images['resultingImage'],
+      heatmap: metadata + images['heatmap'],
   };
-
+  console.log(responseObject.resultingImage)
   // Create a NextResponse object and send it
   return new NextResponse(JSON.stringify(responseObject));
 }
