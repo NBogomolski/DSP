@@ -248,8 +248,10 @@ export default function page() {
                 src={resultImage}
                 alt="Processed"
               />
-              <h3>Correlation heatmap</h3>
-              <img src={heatmap} alt="Heatmap" />
+              {heatmap && <>
+                <h3>Correlation heatmap</h3>
+                <img className="w-[600px]" src={heatmap} alt="Heatmap" />
+              </>}
             </div>
           </>
         )}

@@ -28,7 +28,7 @@ export async function POST(req) {
       resultingImage: metadata + images['resultingImage'],
       heatmap: metadata + images['heatmap'],
   };
-  console.log(responseObject.resultingImage)
+  
   // Create a NextResponse object and send it
   return new NextResponse(JSON.stringify(responseObject));
 }
